@@ -167,8 +167,11 @@ export default function GamePage() {
       const bonusMultiplier = chosenType === 'frequent' ? 1.2 : chosenType === 'special' ? 1.5 : 1.0;
       const totalPrice = Math.round(basePrice * bonusMultiplier);
 
-      const patiencePerRecipe =
+      // Aplica el multiplicador de paciencia del nivel: niveles más altos = clientes más impacientes
+      const basePatiencePerRecipe =
         chosenType === 'impatient' ? 50 : chosenType === 'special' ? 75 : 60;
+      const levelPatienceMultiplier = levelDef.patienceMultiplier ?? 1.0;
+      const patiencePerRecipe = Math.round(basePatiencePerRecipe * levelPatienceMultiplier);
       const totalPatience = patiencePerRecipe * orderCount + 20;
 
       const order: CustomerOrder = {
@@ -370,7 +373,9 @@ export default function GamePage() {
           }
           return { ...prevOven, progress: nextProg };
         } else {
-          const burnIncrement = 0.15;
+          // burnSpeed del nivel hace que el horno queme más rápido en niveles avanzados
+          const levelBurnSpeed = currentLevelDef.burnSpeed ?? 1.0;
+          const burnIncrement = 0.15 * levelBurnSpeed;
           const nextBurn = prevOven.burnProgress + burnIncrement;
           if (nextBurn >= 1.0 && !prevOven.isBurnt) {
             sounds.playBurnAlert();
@@ -796,6 +801,7 @@ export default function GamePage() {
             mixingProgress={mixingProgress}
             availableProducts={currentLevelDef.availableProducts}
             onOpenTutorial={() => setShowTutorial(true)}
+            difficultyLabel={currentLevelDef.difficultyLabel}
           />
 
           {decoratingRecipe && (

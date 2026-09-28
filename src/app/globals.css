@@ -6,32 +6,72 @@
   .animate-spin-slow {
     animation: spin 8s linear infinite;
   }
+
+  /* Entrada suave con escala */
+  .animate-scale-in {
+    animation: scaleIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  /* Entrada desde abajo */
+  .animate-slide-up {
+    animation: slideUp 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  /* Brillo pulsante suave */
+  .animate-glow-pulse {
+    animation: glowPulse 2.5s ease-in-out infinite;
+  }
 }
+
+/* ========================================================================== */
+/* KEYFRAMES PERSONALIZADOS                                                     */
+/* ========================================================================== */
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
-/* Custom scrollbars */
+@keyframes scaleIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(244,114,182,0.3); }
+  50%       { box-shadow: 0 0 40px rgba(244,114,182,0.6), 0 0 60px rgba(168,85,247,0.3); }
+}
+
+/* ========================================================================== */
+/* SCROLLBARS PERSONALIZADOS (modo oscuro)                                     */
+/* ========================================================================== */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #fdf2f8;
+  background: rgba(255,255,255,0.05);
   border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #f472b6;
+  background: rgba(244,114,182,0.4);
   border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #ec4899;
+  background: rgba(244,114,182,0.7);
+}
+
+/* ========================================================================== */
+/* SELECCIÓN DE TEXTO                                                           */
+/* ========================================================================== */
+::selection {
+  background: rgba(168,85,247,0.4);
+  color: white;
 }

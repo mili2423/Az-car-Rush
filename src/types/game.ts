@@ -162,6 +162,9 @@ export interface LevelDefinition {
   availableProducts: ProductId[];
   customerTypes: CustomerType[];
   allowMultiOrders: boolean;
+  burnSpeed?: number;           // Multiplicador de velocidad de quemado del horno (1 = normal, 2 = doble de rápido)
+  patienceMultiplier?: number;  // Multiplicador de paciencia base del cliente (1 = normal, 0.5 = mitad de paciencia)
+  difficultyLabel?: string;     // Etiqueta de dificultad mostrada en el HUD (ej: "Fácil", "Difícil")
   tutorialSteps?: string[];
 }
 
