@@ -7,25 +7,14 @@
     animation: spin 8s linear infinite;
   }
 
-  /* Entrada suave con escala */
   .animate-scale-in {
     animation: scaleIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   }
 
-  /* Entrada desde abajo */
   .animate-slide-up {
-    animation: slideUp 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  }
-
-  /* Brillo pulsante suave */
-  .animate-glow-pulse {
-    animation: glowPulse 2.5s ease-in-out infinite;
+    animation: slideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 }
-
-/* ========================================================================== */
-/* KEYFRAMES PERSONALIZADOS                                                     */
-/* ========================================================================== */
 
 @keyframes spin {
   from { transform: rotate(0deg); }
@@ -33,45 +22,36 @@
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.85); opacity: 0; }
+  from { transform: scale(0.88); opacity: 0; }
   to   { transform: scale(1);    opacity: 1; }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(24px); opacity: 0; }
+  from { transform: translateY(20px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-@keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(244,114,182,0.3); }
-  50%       { box-shadow: 0 0 40px rgba(244,114,182,0.6), 0 0 60px rgba(168,85,247,0.3); }
-}
-
-/* ========================================================================== */
-/* SCROLLBARS PERSONALIZADOS (modo oscuro)                                     */
-/* ========================================================================== */
+/* Scrollbars — tono cálido */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.05);
+  background: #fef6e8;
   border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(244,114,182,0.4);
+  background: #d97706;
   border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(244,114,182,0.7);
+  background: #b45309;
 }
 
-/* ========================================================================== */
-/* SELECCIÓN DE TEXTO                                                           */
-/* ========================================================================== */
+/* Selección de texto */
 ::selection {
-  background: rgba(168,85,247,0.4);
-  color: white;
+  background: rgba(251,191,36,0.35);
+  color: #78350f;
 }
