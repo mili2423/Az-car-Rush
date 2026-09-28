@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowRight, Sparkles, ChefHat } from 'lucide-react';
+import { ArrowRight, Sparkles, ChefHat, Scroll, UtensilsCrossed, Store } from 'lucide-react';
 import { sounds } from '@/utils/audio';
 
 interface IntroCutsceneProps {
@@ -9,7 +9,7 @@ interface IntroCutsceneProps {
 }
 
 interface Slide {
-  emoji: string;
+  icon: React.ReactNode;
   title: string;
   story: string;
   tag: string;
@@ -17,26 +17,26 @@ interface Slide {
 
 const SLIDES: Slide[] = [
   {
-    emoji: '📜',
+    icon: <Scroll className="w-14 h-14 text-pink-600" />,
     tag: 'La Herencia',
     title: 'Una Carta Inesperada',
     story: 'Llega a tus manos una carta amarillenta... Has heredado la vieja pastelería del pueblo. Antaño llena de risas y aroma a pan caliente, hoy sus mesadas acumulan polvo y casi ningún cliente cruza la puerta.',
   },
   {
-    emoji: '🥣',
+    icon: <UtensilsCrossed className="w-14 h-14 text-pink-600" />,
     tag: 'El Desafío',
     title: 'Las Recetas Secretas',
     story: 'Al entrar a la cocina, encuentras el antiguo recetario familiar intacto. Con ingredientes frescos y tus habilidades, puedes devolverle la vida a este rincón dulce y convertirlo en el orgullo de la comunidad.',
   },
   {
-    emoji: '🏪',
+    icon: <Store className="w-14 h-14 text-pink-600" />,
     tag: 'El Gran Sueño',
     title: 'Hacia la Gran Apertura',
     story: 'Día tras día, atenderás a comensales exigentes, ganarás propinas, equiparás el local con hornos más potentes y desbloquearás creaciones deliciosas hasta celebrar la Gran Apertura oficial.',
   },
   {
-    emoji: '👩‍🍳',
-    tag: 'Día 1: Tutorial',
+    icon: <ChefHat className="w-14 h-14 text-pink-600" />,
+    tag: 'Día 1: Inicio',
     title: '¡Hora de Ponerse el Delantal!',
     story: 'El primer cliente acaba de hacer sonar la campana del mostrador. Camina por la cocina con WASD, junta los ingredientes con [E] y prepara tu primera obra maestra.',
   },
@@ -73,9 +73,9 @@ export const IntroCutscene: React.FC<IntroCutsceneProps> = ({ onComplete }) => {
           ))}
         </div>
 
-        {/* Big Emoji Card */}
-        <div className="h-28 w-28 rounded-3xl bg-pink-50 border-2 border-pink-200 flex items-center justify-center text-6xl shadow-inner mb-4 animate-bounce">
-          {slide.emoji}
+        {/* Big Icon Card */}
+        <div className="h-28 w-28 rounded-3xl bg-pink-50 border-2 border-pink-200 flex items-center justify-center shadow-inner mb-4">
+          {slide.icon}
         </div>
 
         {/* Tag badge */}

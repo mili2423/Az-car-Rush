@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * DEFINICIONES DE TIPOS Y MODELOS DE DATOS: AZÚCAR RUSH
+ * ============================================================================
+ * Este archivo contiene todas las estructuras TypeScript de ingredientes,
+ * recetas, estados de bandeja, clientes, mejoras de la tienda y niveles.
+ */
+
+// ----------------------------------------------------------------------------
+// 1. INGREDIENTES
+// ----------------------------------------------------------------------------
 export type IngredientId = 'flour' | 'egg' | 'milk' | 'chocolate' | 'sugar' | 'strawberry';
 
 export interface Ingredient {
@@ -8,6 +19,7 @@ export interface Ingredient {
   description: string;
 }
 
+// Diccionario de ingredientes disponibles en la pastelería
 export const INGREDIENTS: Record<IngredientId, Ingredient> = {
   flour: { id: 'flour', name: 'Harina', emoji: '🌾', color: '#fef3c7', description: 'Base para todas las masas' },
   egg: { id: 'egg', name: 'Huevo', emoji: '🥚', color: '#fde047', description: 'Da consistencia y esponjosidad' },
@@ -17,21 +29,25 @@ export const INGREDIENTS: Record<IngredientId, Ingredient> = {
   strawberry: { id: 'strawberry', name: 'Frutilla', emoji: '🍓', color: '#f43f5e', description: 'Frutilla fresca del huerto' },
 };
 
+// ----------------------------------------------------------------------------
+// 2. PRODUCTOS Y RECETAS
+// ----------------------------------------------------------------------------
 export type ProductId = 'cookie' | 'cupcake' | 'donut' | 'tart' | 'cake' | 'pastry';
 
 export interface Recipe {
   id: ProductId;
   name: string;
-  price: number;
+  price: number;              // Precio de venta en $
   emoji: string;
-  ingredients: IngredientId[];
-  requiresBaking: boolean;
-  bakeTimeSeconds: number; // base bake duration
-  requiresDecoration: boolean;
-  decorationName?: string;
+  ingredients: IngredientId[]; // Lista exacta de ingredientes requeridos
+  requiresBaking: boolean;    // Si necesita pasar por el horno
+  bakeTimeSeconds: number;    // Segundos que tarda en hornearse
+  requiresDecoration: boolean;// Si necesita pasar por la mesa de decoración
+  decorationName?: string;    // Nombre del glaseado/topping
   decorationColor?: string;
 }
 
+// Libro oficial de recetas
 export const RECIPES: Record<ProductId, Recipe> = {
   cookie: {
     id: 'cookie',
@@ -103,14 +119,20 @@ export const RECIPES: Record<ProductId, Recipe> = {
   },
 };
 
+// ----------------------------------------------------------------------------
+// 3. ESTADOS DE LA BANDEJA (LO QUE SOSTIENE EL JUGADOR)
+// ----------------------------------------------------------------------------
 export type TrayState = 
-  | { type: 'empty' }
-  | { type: 'ingredients'; items: IngredientId[] }
-  | { type: 'mixed_dough'; recipeId: ProductId }
-  | { type: 'baked'; recipeId: ProductId }
-  | { type: 'finished'; recipeId: ProductId }
-  | { type: 'burnt'; recipeId: ProductId };
+  | { type: 'empty' }                                  // Bandeja vacía
+  | { type: 'ingredients'; items: IngredientId[] }     // Ingredientes crudos recolectados
+  | { type: 'mixed_dough'; recipeId: ProductId }       // Masa batida lista para el horno
+  | { type: 'baked'; recipeId: ProductId }             // Postre horneado (puede requerir decoración)
+  | { type: 'finished'; recipeId: ProductId }          // Postre terminado listo para entregar
+  | { type: 'burnt'; recipeId: ProductId };            // Postre quemado (para tirar a la basura)
 
+// ----------------------------------------------------------------------------
+// 4. CLIENTES Y PEDIDOS
+// ----------------------------------------------------------------------------
 export type CustomerType = 'normal' | 'impatient' | 'frequent' | 'special';
 
 export interface CustomerOrder {
@@ -118,14 +140,17 @@ export interface CustomerOrder {
   customerType: CustomerType;
   customerName: string;
   avatarColor: string;
-  items: ProductId[];
-  deliveredItems: ProductId[];
-  totalPrice: number;
-  maxPatienceSeconds: number;
-  currentPatienceSeconds: number;
+  items: ProductId[];          // Lista de recetas solicitadas en el pedido
+  deliveredItems: ProductId[]; // Lista de recetas ya entregadas
+  totalPrice: number;          // Total a pagar al completar el pedido
+  maxPatienceSeconds: number;  // Tiempo máximo de paciencia inicial
+  currentPatienceSeconds: number; // Tiempo de paciencia restante
   createdAt: number;
 }
 
+// ----------------------------------------------------------------------------
+// 5. DEFINICIÓN DE NIVELES
+// ----------------------------------------------------------------------------
 export interface LevelDefinition {
   levelNumber: number;
   title: string;
@@ -140,24 +165,28 @@ export interface LevelDefinition {
   tutorialSteps?: string[];
 }
 
+// ----------------------------------------------------------------------------
+// 6. MEJORAS DE LA TIENDA Y PROGRESO DEL JUGADOR
+// ----------------------------------------------------------------------------
 export interface PlayerUpgrades {
-  fasterOven: number;       // level 0..3 (+20% speed per level)
-  fasterWalkSpeed: number;  // level 0..3 (+15% speed per level)
-  extraLives: number;       // level 0..2 (+1 life per level)
-  extraTime: number;        // level 0..3 (+15s per level)
-  trayCapacity: number;     // level 0..1 (allows carrying 2 items)
+  fasterOven: number;       // Nivel 0..3 (+20% velocidad de horneado por nivel)
+  fasterWalkSpeed: number;  // Nivel 0..3 (+15% velocidad de movimiento)
+  extraLives: number;       // Nivel 0..2 (+1 vida/corazón por nivel)
+  extraTime: number;        // Nivel 0..3 (+20s por nivel)
+  trayCapacity: number;     // Capacidad de bandeja
 }
 
 export interface GameProgress {
   unlockedLevel: number;
   highScore: number;
   totalCoins: number;
-  starsPerLevel: Record<number, number>; // levelNumber -> stars (1..3)
+  starsPerLevel: Record<number, number>; // levelNumber -> estrellas (1..3)
   upgrades: PlayerUpgrades;
   introSeen: boolean;
   tutorialSeen?: boolean;
 }
 
+// Objetos interactuables en la cocina 3D
 export type InteractableType = 
   | 'flour'
   | 'egg'
@@ -171,11 +200,12 @@ export type InteractableType =
   | 'counter'
   | 'trash';
 
+// Estado interno del horno pastelero
 export interface OvenState {
-  isCooking: boolean;
-  recipeId: ProductId | null;
-  progress: number; // 0 to 1 (0 to 1 = cooking, 1 = ready)
-  burnProgress: number; // 0 to 1 (0 = ready, 1 = burnt)
-  isReady: boolean;
-  isBurnt: boolean;
+  isCooking: boolean;          // Si está activo cocinando
+  recipeId: ProductId | null;  // Receta que se está cocinando
+  progress: number;            // 0 a 1 (0 a 1 = cocinando, 1 = listo)
+  burnProgress: number;        // 0 a 1 (0 = recién listo, 1 = quemado)
+  isReady: boolean;            // Si ya terminó de hornearse
+  isBurnt: boolean;            // Si se quemó
 }

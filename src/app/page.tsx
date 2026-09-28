@@ -19,7 +19,9 @@ import { LEVELS } from '@/utils/levels';
 import { loadGameProgress, saveGameProgress } from '@/utils/storage';
 import { sounds } from '@/utils/audio';
 
-// 2D UI Components
+// ============================================================================
+// COMPONENTES DE INTERFAZ 2D (HUD, Modales, Pantallas y Menús)
+// ============================================================================
 import { Crosshair } from '@/components/ui/Crosshair';
 import { HUD } from '@/components/ui/HUD';
 import { StartScreen } from '@/components/ui/StartScreen';
@@ -33,7 +35,9 @@ import { LevelSummaryModal } from '@/components/ui/LevelSummaryModal';
 import { GameWinModal } from '@/components/ui/GameWinModal';
 import { MiniTutorialModal } from '@/components/ui/MiniTutorialModal';
 
-// Dynamically import Three.js 3D Scene with SSR disabled
+// ============================================================================
+// ESCENA 3D (Three.js / React Three Fiber con SSR desactivado)
+// ============================================================================
 const BakeryScene = dynamic(
   () => import('@/components/3d/BakeryScene').then(mod => mod.BakeryScene),
   { ssr: false }
@@ -42,12 +46,14 @@ const BakeryScene = dynamic(
 type ScreenState = 'home' | 'cutscene' | 'playing' | 'summary' | 'win';
 
 export default function GamePage() {
-  // --- Global Progress & Settings ---
+  // --------------------------------------------------------------------------
+  // 1. ESTADO GLOBAL DE PROGRESO Y AJUSTES
+  // --------------------------------------------------------------------------
   const [progress, setProgress] = useState<GameProgress>(loadGameProgress);
   const [screen, setScreen] = useState<ScreenState>('home');
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
-  // Modals
+  // Estados para abrir/cerrar modales
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
   const [showCredits, setShowCredits] = useState<boolean>(false);
@@ -55,7 +61,9 @@ export default function GamePage() {
   const [isMixerActive, setIsMixerActive] = useState<boolean>(false);
   const [decoratingRecipe, setDecoratingRecipe] = useState<ProductId | null>(null);
 
-  // --- Active Level State ---
+  // --------------------------------------------------------------------------
+  // 2. ESTADO DEL NIVEL ACTIVO (DÍA EN CURSO)
+  // --------------------------------------------------------------------------
   const [currentLevelNumber, setCurrentLevelNumber] = useState<number>(1);
   const currentLevelDef: LevelDefinition =
     LEVELS.find(l => l.levelNumber === currentLevelNumber) || LEVELS[0];
@@ -64,14 +72,18 @@ export default function GamePage() {
   const [score, setScore] = useState<number>(0);
   const [lives, setLives] = useState<number>(3);
   const [maxLives, setMaxLives] = useState<number>(3);
-  const [timeLeft, setTimeLeft] = useState<number>(150);
+  const [timeLeft, setTimeLeft] = useState<number>(200);
   const [ordersDeliveredCount, setOrdersDeliveredCount] = useState<number>(0);
 
-  // 3D / Player State
+  // --------------------------------------------------------------------------
+  // 3. ESTADO DEL JUGADOR Y CONTROL 3D (PRIMERA PERSONA)
+  // --------------------------------------------------------------------------
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [focusedObject, setFocusedObject] = useState<string | null>(null);
 
-  // Cooking state
+  // --------------------------------------------------------------------------
+  // 4. ESTADO DE COCINA: BANDEJA Y HORNO
+  // --------------------------------------------------------------------------
   const [tray, setTray] = useState<TrayState>({ type: 'empty' });
   const [ovenState, setOvenState] = useState<OvenState>({
     isCooking: false,
@@ -82,20 +94,17 @@ export default function GamePage() {
     isBurnt: false,
   });
 
-  // Customers state
+  // --------------------------------------------------------------------------
+  // 5. ESTADO DE CLIENTES Y PEDIDOS
+  // --------------------------------------------------------------------------
   const [currentOrder, setCurrentOrder] = useState<CustomerOrder | null>(null);
   const [customersRemaining, setCustomersRemaining] = useState<number>(3);
 
-  // Tutorial tip index for Level 1
-  const [tutorialStepIdx, setTutorialStepIdx] = useState<number>(0);
-
-  // End of level result
   const [summaryResult, setSummaryResult] = useState<{
     isVictory: boolean;
     stars: number;
   }>({ isVictory: false, stars: 0 });
 
-  // Toast notifications & in-HUD mixing progress
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'warning' } | null>(null);
   const [mixingProgress, setMixingProgress] = useState<number | null>(null);
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -108,7 +117,6 @@ export default function GamePage() {
     }, 3800);
   }, []);
 
-  // Update progress helper
   const updateProgress = useCallback((newProg: Partial<GameProgress>) => {
     setProgress(prev => {
       const updated = { ...prev, ...newProg };
@@ -117,14 +125,15 @@ export default function GamePage() {
     });
   }, []);
 
-  // Audio mute toggle
   const toggleMute = () => {
     const nextMuted = !isMuted;
     setIsMuted(nextMuted);
     sounds.setMuted(nextMuted);
   };
 
-  // Generate a customer
+  // --------------------------------------------------------------------------
+  // 6. GENERACIÓN DE CLIENTES Y CÁLCULO DE TIEMPO / PACIENCIA
+  // --------------------------------------------------------------------------
   const spawnCustomer = useCallback(
     (levelDef: LevelDefinition) => {
       const customerNames = [
@@ -142,11 +151,10 @@ export default function GamePage() {
       const available = levelDef.availableProducts;
       const items: ProductId[] = [];
 
-      // Determine order size
       const orderCount =
         levelDef.allowMultiOrders && (chosenType === 'special' || Math.random() > 0.5)
           ? chosenType === 'special'
-            ? Math.floor(Math.random() * 2) + 2 // 2 or 3 items
+            ? Math.floor(Math.random() * 2) + 2
             : 2
           : 1;
 
@@ -159,8 +167,9 @@ export default function GamePage() {
       const bonusMultiplier = chosenType === 'frequent' ? 1.2 : chosenType === 'special' ? 1.5 : 1.0;
       const totalPrice = Math.round(basePrice * bonusMultiplier);
 
-      const basePatience =
-        chosenType === 'impatient' ? 26 : chosenType === 'special' ? 45 : 35;
+      const patiencePerRecipe =
+        chosenType === 'impatient' ? 50 : chosenType === 'special' ? 75 : 60;
+      const totalPatience = patiencePerRecipe * orderCount + 20;
 
       const order: CustomerOrder = {
         id: `cust-${Date.now()}`,
@@ -170,8 +179,8 @@ export default function GamePage() {
         items,
         deliveredItems: [],
         totalPrice,
-        maxPatienceSeconds: basePatience,
-        currentPatienceSeconds: basePatience,
+        maxPatienceSeconds: totalPatience,
+        currentPatienceSeconds: totalPatience,
         createdAt: Date.now(),
       };
 
@@ -181,7 +190,9 @@ export default function GamePage() {
     []
   );
 
-  // --- Start Level ---
+  // --------------------------------------------------------------------------
+  // 7. INICIAR NIVEL
+  // --------------------------------------------------------------------------
   const startLevel = useCallback(
     (lvlNum: number) => {
       const def = LEVELS.find(l => l.levelNumber === lvlNum) || LEVELS[0];
@@ -206,13 +217,11 @@ export default function GamePage() {
         isBurnt: false,
       });
       setCustomersRemaining(def.customerCount);
-      setTutorialStepIdx(0);
 
       spawnCustomer(def);
       setScreen('playing');
       sounds.startBGM();
 
-      // Request pointer lock after DOM paints
       setTimeout(() => {
         const canvas = document.querySelector('canvas');
         canvas?.requestPointerLock?.();
@@ -221,62 +230,74 @@ export default function GamePage() {
     [progress.upgrades, spawnCustomer]
   );
 
-  // --- Dynamic Tutorial Guidance for Level 1 ---
+  // --------------------------------------------------------------------------
+  // 8. GUÍA DINÁMICA DEL TUTORIAL (SOLO DÍA 1 - SIN EMOJIS)
+  // --------------------------------------------------------------------------
   const getDynamicTutorialTip = useCallback((): string | undefined => {
     if (currentLevelNumber !== 1) return undefined;
-    if (!currentOrder) return 'Esperando al próximo cliente... 🛎️';
+    if (!currentOrder) return 'Esperando al próximo cliente...';
     if (tray.type === 'empty') {
       const target = currentOrder.items[0];
       const rec = RECIPES[target];
-      if (!rec) return '1️⃣ Toma los ingredientes del pedido con [E] en la estantería';
-      const ings = rec.ingredients.map(i => `${INGREDIENTS[i].emoji} ${INGREDIENTS[i].name}`).join(', ');
-      return `1️⃣ Toma los ingredientes para ${rec.name} (${ings}) con [E] en la estantería`;
+      if (!rec) return '1. Toma los ingredientes del pedido con [E] en la estantería';
+      const ings = rec.ingredients.map(i => INGREDIENTS[i].name).join(', ');
+      return `1. Toma los ingredientes para ${rec.name} (${ings}) con [E] en la estantería`;
     }
     if (tray.type === 'ingredients') {
-      return '2️⃣ Ve a la Batidora Rosa y presiona [E] para batir la masa 🥣';
+      return '2. Ve a la Batidora Rosa y presiona [E] para batir la masa';
     }
     if (tray.type === 'mixed_dough') {
-      return '3️⃣ Lleva la masa al Horno y presiona [E] para hornear 🔥';
+      return '3. Lleva la masa al Horno y presiona [E] para hornear';
     }
     if (ovenState.isCooking) {
       if (ovenState.isReady) {
-        return '4️⃣ ¡El postre está listo! Presiona [E] en el horno antes de que se queme 🔥';
+        return '4. ¡El postre está listo! Presiona [E] en el horno antes de que se queme';
       }
-      return '4️⃣ Espera que suene el DING 🔔 en el horno...';
+      return '4. Espera a que suene la campana en el horno...';
     }
     if (tray.type === 'baked') {
       const rec = RECIPES[tray.recipeId];
       if (rec?.requiresDecoration) {
-        return '5️⃣ Ve a la mesa de decoración 🎨 y presiona [E] para decorarlo';
+        return '5. Ve a la mesa de decoración y presiona [E] para decorarlo';
       }
-      return '6️⃣ ¡Ve al mostrador frente al cliente y presiona [E] para entregar! 🎁';
+      return '6. Ve al mostrador frente al cliente y presiona [E] para entregar';
     }
     if (tray.type === 'finished') {
-      return '6️⃣ ¡Ve al mostrador frente al cliente y presiona [E] para entregar el pedido! 🎁';
+      return '6. Ve al mostrador frente al cliente y presiona [E] para entregar el pedido';
     }
     if (tray.type === 'burnt') {
-      return '⚠️ El postre se quemó. Ve al tacho de basura 🗑️ y presiona [E] para vaciarlo';
+      return 'El postre se quemó. Ve al tacho de basura y presiona [E] para vaciarlo';
     }
     return currentLevelDef.tutorialSteps?.[0];
   }, [currentLevelNumber, currentOrder, tray, ovenState, currentLevelDef]);
 
-  // --- Handle Play button from Home ---
+  // --------------------------------------------------------------------------
+  // 9. FLUJO DE INICIO Y TUTORIAL (A PARTIR DEL DÍA 2 NO SE MUESTRA)
+  // --------------------------------------------------------------------------
   const handleHomePlay = () => {
+    // Si el jugador ya desbloqueó el Día 2 o superior, jamás mostrar el tutorial automáticamente
+    if (progress.unlockedLevel > 1) {
+      startLevel(progress.unlockedLevel);
+      return;
+    }
+
+    // Para el Día 1:
     if (!progress.introSeen) {
       setScreen('cutscene');
     } else if (!progress.tutorialSeen) {
       setShowTutorial(true);
     } else {
-      startLevel(progress.unlockedLevel || 1);
+      startLevel(1);
     }
   };
 
   const handleCutsceneComplete = () => {
     updateProgress({ introSeen: true });
-    if (!progress.tutorialSeen) {
+    // Solo mostrar el tutorial si estamos en el Día 1
+    if (!progress.tutorialSeen && progress.unlockedLevel <= 1) {
       setShowTutorial(true);
     } else {
-      startLevel(1);
+      startLevel(progress.unlockedLevel || 1);
     }
   };
 
@@ -288,27 +309,27 @@ export default function GamePage() {
     }
   };
 
-  // --- Game Loop (Timer, Patience, Oven) ---
+  // --------------------------------------------------------------------------
+  // 10. BUCLE PRINCIPAL DEL JUEGO (RELOJ, PACIENCIA DE CLIENTES Y HORNO)
+  // --------------------------------------------------------------------------
   useEffect(() => {
     if (screen !== 'playing') return;
 
     const interval = setInterval(() => {
-      // 1. Level Countdown
+      // A. Cuenta regresiva del nivel
       setTimeLeft(prev => {
         if (prev <= 1) {
-          // Time expired!
           handleEndLevel(false);
           return 0;
         }
         return prev - 1;
       });
 
-      // 2. Customer Patience Countdown
+      // B. Paciencia del cliente
       setCurrentOrder(prevOrder => {
         if (!prevOrder) return null;
         const nextPatience = prevOrder.currentPatienceSeconds - 1;
         if (nextPatience <= 0) {
-          // Customer abandoned!
           sounds.playError();
           setScore(s => Math.max(0, s - 100));
           setLives(l => {
@@ -319,7 +340,6 @@ export default function GamePage() {
             return nextL;
           });
 
-          // Next customer
           setCustomersRemaining(c => {
             const rem = c - 1;
             if (rem <= 0) {
@@ -334,7 +354,7 @@ export default function GamePage() {
         return { ...prevOrder, currentPatienceSeconds: nextPatience };
       });
 
-      // 3. Oven Baking Progress
+      // C. Progreso del horno
       setOvenState(prevOven => {
         if (!prevOven.isCooking || !prevOven.recipeId) return prevOven;
 
@@ -350,8 +370,7 @@ export default function GamePage() {
           }
           return { ...prevOven, progress: nextProg };
         } else {
-          // Food is ready, now burning timer ticks!
-          const burnIncrement = 0.15; // ~7 seconds to take it out before it burns
+          const burnIncrement = 0.15;
           const nextBurn = prevOven.burnProgress + burnIncrement;
           if (nextBurn >= 1.0 && !prevOven.isBurnt) {
             sounds.playBurnAlert();
@@ -370,13 +389,14 @@ export default function GamePage() {
     return () => clearInterval(interval);
   }, [screen, currentLevelDef, money, progress.upgrades, spawnCustomer]);
 
-  // --- End of Level Evaluation ---
+  // --------------------------------------------------------------------------
+  // 11. EVALUACIÓN DE FIN DE NIVEL
+  // --------------------------------------------------------------------------
   const handleEndLevel = (isVictory: boolean) => {
     sounds.stopBGM();
     document.exitPointerLock?.();
 
     if (isVictory) {
-      // Calculate Stars (1 to 3)
       let stars = 1;
       if (money >= currentLevelDef.targetMoney * 1.25 || lives >= 2) stars = 2;
       if (money >= currentLevelDef.targetMoney * 1.4 && lives >= 3) stars = 3;
@@ -412,29 +432,26 @@ export default function GamePage() {
     }
   };
 
-  // --- Interaction Router (Triggered by 'E' or Left Click) ---
+  // --------------------------------------------------------------------------
+  // 12. ENRUTADOR DE INTERACCIÓN (SIN EMOJIS EN MENSAJES)
+  // --------------------------------------------------------------------------
   const handleInteract = () => {
     if (!focusedObject) return;
 
-    // 1. Ingredients shelf
-    if (
-      ['flour', 'egg', 'milk', 'chocolate', 'sugar', 'strawberry'].includes(
-        focusedObject
-      )
-    ) {
+    // A. Estantería de Ingredientes
+    if (['flour', 'egg', 'milk', 'chocolate', 'sugar', 'strawberry'].includes(focusedObject)) {
       const ingId = focusedObject as IngredientId;
       const ing = INGREDIENTS[ingId];
       sounds.playPickup();
 
       if (tray.type === 'empty') {
         setTray({ type: 'ingredients', items: [ingId] });
-        showToast(`+1 ${ing.name} ${ing.emoji} en bandeja (1/5)`, 'info');
+        showToast(`+1 ${ing.name} en bandeja (1/5)`, 'info');
       } else if (tray.type === 'ingredients') {
         if (tray.items.length < 5) {
           const updated = [...tray.items, ingId];
           setTray({ type: 'ingredients', items: updated });
 
-          // Check if it already matches an active recipe
           const matched = Object.values(RECIPES).find(r => {
             if (!currentLevelDef.availableProducts.includes(r.id)) return false;
             if (r.ingredients.length !== updated.length) return false;
@@ -444,49 +461,48 @@ export default function GamePage() {
           });
 
           if (matched) {
-            showToast(`✅ ¡Ingredientes listos para ${matched.name}! Ve a la batidora 🥣`, 'success');
+            showToast(`Ingredientes listos para ${matched.name}. Ve a la batidora`, 'success');
           } else {
-            showToast(`+1 ${ing.name} ${ing.emoji} (${updated.length}/5 en bandeja)`, 'info');
+            showToast(`+1 ${ing.name} (${updated.length}/5 en bandeja)`, 'info');
           }
         } else {
-          showToast('⚠️ Bandeja llena (máximo 5 ingredientes)', 'warning');
+          showToast('Bandeja llena (máximo 5 ingredientes)', 'warning');
         }
       } else {
-        showToast('⚠️ Ya tienes un postre en la bandeja. Termínalo o vacíalo en el tacho 🗑️', 'warning');
+        showToast('Ya tienes un postre en la bandeja. Termínalo o vacíalo en el tacho', 'warning');
       }
       return;
     }
 
-    // 2. Mixer Station
+    // B. Estación de Batido
     if (focusedObject === 'mixer') {
-      if (mixingProgress !== null) return; // already in progress
+      if (mixingProgress !== null) return;
 
       if (tray.type === 'empty') {
         const targetProd = currentOrder?.items[0] || currentLevelDef.availableProducts[0];
         const rec = RECIPES[targetProd];
         sounds.playError();
-        const ingList = rec.ingredients.map(i => `${INGREDIENTS[i].name} ${INGREDIENTS[i].emoji}`).join(' + ');
-        showToast(`🥣 Bandeja vacía. Para ${rec.name} toma: ${ingList}`, 'warning');
+        const ingList = rec.ingredients.map(i => INGREDIENTS[i].name).join(' + ');
+        showToast(`Bandeja vacía. Para ${rec.name} toma: ${ingList}`, 'warning');
         return;
       }
 
       if (tray.type === 'mixed_dough') {
-        showToast('🔥 ¡Esta masa ya está batida! Llévala al horno pastelero.', 'info');
+        showToast('Esta masa ya está batida. Llévala al horno pastelero.', 'info');
         return;
       }
 
       if (tray.type === 'baked' || tray.type === 'finished') {
-        showToast('📦 Este postre ya está horneado. Llévalo a decorar o al mostrador.', 'info');
+        showToast('Este postre ya está horneado. Llévalo a decorar o al mostrador.', 'info');
         return;
       }
 
       if (tray.type === 'burnt') {
-        showToast('🗑️ Postre quemado. Tíralo a la basura.', 'warning');
+        showToast('Postre quemado. Tíralo a la basura.', 'warning');
         return;
       }
 
       if (tray.type === 'ingredients') {
-        // Find if ingredients match any available recipe
         const matchingRecipe = Object.values(RECIPES).find(r => {
           if (!currentLevelDef.availableProducts.includes(r.id)) return false;
           if (r.ingredients.length !== tray.items.length) return false;
@@ -496,11 +512,10 @@ export default function GamePage() {
         });
 
         if (matchingRecipe) {
-          // START SMOOTH MIXING ANIMATION
           setIsMixerActive(true);
           setMixingProgress(0);
           sounds.playMixSound();
-          showToast(`🥣 Batiendo masa para ${matchingRecipe.name}...`, 'info');
+          showToast(`Batiendo masa para ${matchingRecipe.name}...`, 'info');
 
           let progressValue = 0;
           const mixInterval = setInterval(() => {
@@ -511,31 +526,29 @@ export default function GamePage() {
               setIsMixerActive(false);
               sounds.playMixSuccess();
               setTray({ type: 'mixed_dough', recipeId: matchingRecipe.id });
-              showToast(`✨ ¡Masa de ${matchingRecipe.name} lista! Llévala al horno [E en 🔥]`, 'success');
+              showToast(`Masa de ${matchingRecipe.name} lista. Llévala al horno [E]`, 'success');
             } else {
               setMixingProgress(progressValue);
             }
           }, 140);
         } else {
           sounds.playError();
-          // Find closest target recipe to tell user what they are missing
           const targetProd = currentOrder?.items.find(p => currentLevelDef.availableProducts.includes(p)) || currentLevelDef.availableProducts[0];
           const rec = RECIPES[targetProd];
           const missing = rec.ingredients.filter(i => !tray.items.includes(i));
           if (missing.length > 0) {
-            const missingNames = missing.map(i => `${INGREDIENTS[i].name} ${INGREDIENTS[i].emoji}`).join(', ');
-            showToast(`🥣 Para ${rec.name} te falta: ${missingNames} (o vacía en 🗑️)`, 'warning');
+            const missingNames = missing.map(i => INGREDIENTS[i].name).join(', ');
+            showToast(`Para ${rec.name} te falta: ${missingNames}`, 'warning');
           } else {
-            showToast(`⚠️ Combinación inválida (${tray.items.map(i => INGREDIENTS[i].name).join(' + ')}). Vacía en 🗑️`, 'warning');
+            showToast(`Combinación inválida (${tray.items.map(i => INGREDIENTS[i].name).join(' + ')}). Vacía en el tacho`, 'warning');
           }
         }
       }
       return;
     }
 
-    // 3. Oven Station
+    // C. Horno
     if (focusedObject === 'oven') {
-      // Put in raw dough
       if (tray.type === 'mixed_dough' && !ovenState.isCooking) {
         const rec = RECIPES[tray.recipeId];
         sounds.playPickup();
@@ -548,24 +561,23 @@ export default function GamePage() {
           isBurnt: false,
         });
         setTray({ type: 'empty' });
-        showToast(`🔥 Horneando ${rec.name}... ¡Sácalo cuando suene la campana!`, 'info');
+        showToast(`Horneando ${rec.name}... Sácalo cuando suene la campana`, 'info');
         return;
       }
 
-      // Take out cooked or burnt product
       if (ovenState.isCooking && (ovenState.isReady || ovenState.isBurnt)) {
         sounds.playPickup();
         if (ovenState.isBurnt) {
           setTray({ type: 'burnt', recipeId: ovenState.recipeId! });
-          showToast('⚠️ ¡El producto se quemó! Tíralo a la basura 🗑️', 'warning');
+          showToast('El producto se quemó. Tíralo a la basura', 'warning');
         } else {
           const rec = RECIPES[ovenState.recipeId!];
           if (rec.requiresDecoration) {
             setTray({ type: 'baked', recipeId: ovenState.recipeId! });
-            showToast(`✨ ¡${rec.name} horneado! Llévalo a la mesa de decoración [E en 🎨]`, 'info');
+            showToast(`${rec.name} horneado. Llévalo a la mesa de decoración [E]`, 'info');
           } else {
             setTray({ type: 'finished', recipeId: ovenState.recipeId! });
-            showToast(`✨ ¡${rec.name} horneado y listo para entregar al cliente! [E en 🎁]`, 'success');
+            showToast(`${rec.name} horneado y listo para entregar al cliente [E]`, 'success');
           }
         }
         setOvenState({
@@ -580,48 +592,46 @@ export default function GamePage() {
       }
 
       if (ovenState.isCooking && !ovenState.isReady) {
-        showToast('⏳ Aún se está cocinando... Espera al ding de listo', 'info');
+        showToast('Aún se está cocinando... Espera a que esté listo', 'info');
         return;
       }
 
       if (tray.type !== 'mixed_dough' && !ovenState.isCooking) {
-        showToast('🔥 El horno está libre. Trae una masa batida para hornear.', 'info');
+        showToast('El horno está libre. Trae una masa batida para hornear.', 'info');
         return;
       }
       return;
     }
 
-    // 4. Decoration Station
+    // D. Mesa de Decoración
     if (focusedObject === 'decorating') {
       if (tray.type === 'baked') {
         const rec = RECIPES[tray.recipeId];
         if (rec.requiresDecoration) {
           sounds.playPickup();
           setTray({ type: 'finished', recipeId: tray.recipeId });
-          showToast(`🎨 ¡${rec.name} decorado con ${rec.decorationName}! ¡Listo para entregar! 🎁`, 'success');
+          showToast(`${rec.name} decorado con ${rec.decorationName}. ¡Listo para entregar!`, 'success');
         } else {
-          showToast(`✨ ${rec.name} no requiere decoración. ¡Entrégalo al cliente!`, 'info');
+          showToast(`${rec.name} no requiere decoración. ¡Entrégalo al cliente!`, 'info');
         }
       } else if (tray.type === 'finished') {
-        showToast('✨ Ya está decorado. Llévalo al mostrador para entregarlo al cliente [E].', 'info');
+        showToast('Ya está decorado. Llévalo al mostrador para entregarlo al cliente [E].', 'info');
       } else {
-        showToast('🎨 Trae un postre horneado que requiera decoración (cupcake, donut, tarta, torta).', 'info');
+        showToast('Trae un postre horneado que requiera decoración (cupcake, donut, tarta, torta).', 'info');
       }
       return;
     }
 
-    // 5. Service Counter (Deliver to Customer)
+    // E. Mostrador de Entrega
     if (focusedObject === 'counter') {
       if (tray.type === 'finished' || tray.type === 'baked') {
         const deliveredId = tray.recipeId;
 
         if (currentOrder && currentOrder.items.includes(deliveredId)) {
-          // Correct item!
           sounds.playSuccessDelivery();
           const recipe = RECIPES[deliveredId];
 
-          const isFast =
-            currentOrder.currentPatienceSeconds / currentOrder.maxPatienceSeconds > 0.6;
+          const isFast = currentOrder.currentPatienceSeconds / currentOrder.maxPatienceSeconds > 0.6;
           const isDecorated = tray.type === 'finished';
           const bonusDecor = isDecorated ? 50 : 0;
           const pointsEarned = 100 + (isFast ? 50 : 0) + bonusDecor;
@@ -633,9 +643,9 @@ export default function GamePage() {
           setTray({ type: 'empty' });
 
           if (isDecorated || !recipe.requiresDecoration) {
-            showToast(`🎉 ¡${recipe.name} entregado con éxito! +$${revenueEarned} (+${pointsEarned} pts)`, 'success');
+            showToast(`${recipe.name} entregado con éxito. +$${revenueEarned} (+${pointsEarned} pts)`, 'success');
           } else {
-            showToast(`🎉 ¡${recipe.name} entregado! +$${revenueEarned} (Tip: decóralo en 🎨 para +50 pts)`, 'success');
+            showToast(`${recipe.name} entregado. +$${revenueEarned} (Tip: decóralo para +50 pts)`, 'success');
           }
 
           const remainingItems = [...currentOrder.items];
@@ -643,11 +653,9 @@ export default function GamePage() {
           if (idx > -1) remainingItems.splice(idx, 1);
 
           if (remainingItems.length === 0) {
-            // Whole order complete!
             setCustomersRemaining(rem => {
               const nextRem = rem - 1;
               if (nextRem <= 0) {
-                // All customers served! Check victory
                 setTimeout(() => {
                   handleEndLevel(true);
                 }, 800);
@@ -659,17 +667,22 @@ export default function GamePage() {
             });
             setCurrentOrder(null);
           } else {
+            const bonusPatience = 40;
+            const updatedPatience = Math.min(
+              currentOrder.maxPatienceSeconds,
+              currentOrder.currentPatienceSeconds + bonusPatience
+            );
             setCurrentOrder({
               ...currentOrder,
               items: remainingItems,
               deliveredItems: [...currentOrder.deliveredItems, deliveredId],
+              currentPatienceSeconds: updatedPatience,
             });
           }
         } else {
-          // Wrong item!
           sounds.playError();
           const wantedNames = currentOrder?.items.map(p => RECIPES[p].name).join(' o ') || 'nada';
-          showToast(`❌ El cliente pidió ${wantedNames}, no ${RECIPES[deliveredId].name}. (Usa 🗑️ para vaciar)`, 'warning');
+          showToast(`El cliente pidió ${wantedNames}, no ${RECIPES[deliveredId].name}. (Usa el tacho para vaciar)`, 'warning');
           setScore(s => Math.max(0, s - 50));
           setLives(l => {
             const nextL = l - 1;
@@ -678,28 +691,27 @@ export default function GamePage() {
           });
         }
       } else if (tray.type === 'ingredients') {
-        showToast('🥣 Tienes ingredientes crudos en la bandeja. Llévalos a la batidora 🥣', 'info');
+        showToast('Tienes ingredientes crudos en la bandeja. Llévalos a la batidora', 'info');
       } else if (tray.type === 'mixed_dough') {
-        showToast('🔥 Tienes masa cruda en la bandeja. Llévala al horno 🔥', 'info');
+        showToast('Tienes masa cruda en la bandeja. Llévala al horno', 'info');
       } else {
-        showToast('🛎️ Mostrador de clientes. Trae el postre horneado para entregarlo.', 'info');
+        showToast('Mostrador de clientes. Trae el postre horneado para entregarlo.', 'info');
       }
       return;
     }
 
-    // 6. Trash Can
+    // F. Tacho de Basura
     if (focusedObject === 'trash') {
       if (tray.type !== 'empty') {
         sounds.playPickup();
         setTray({ type: 'empty' });
-        showToast('🗑️ Bandeja vaciada.', 'info');
+        showToast('Bandeja vaciada.', 'info');
       } else {
-        showToast('🗑️ La bandeja ya está vacía.', 'info');
+        showToast('La bandeja ya está vacía.', 'info');
       }
     }
   };
 
-  // Upgrades shop purchase
   const handleBuyUpgrade = (upgradeKey: keyof PlayerUpgrades, cost: number) => {
     if (progress.totalCoins >= cost) {
       const nextUpgrades = {
@@ -713,9 +725,12 @@ export default function GamePage() {
     }
   };
 
+  // --------------------------------------------------------------------------
+  // 13. RENDERIZADO DE LA INTERFAZ
+  // --------------------------------------------------------------------------
   return (
     <main className="relative w-screen h-screen overflow-hidden select-none bg-black">
-      {/* 1. HOME SCREEN */}
+      {/* 1. MENÚ PRINCIPAL */}
       {screen === 'home' && (
         <StartScreen
           progress={progress}
@@ -729,12 +744,12 @@ export default function GamePage() {
         />
       )}
 
-      {/* 2. INTRO CUTSCENE */}
+      {/* 2. CINEMÁTICA DE INTRODUCCIÓN */}
       {screen === 'cutscene' && (
         <IntroCutscene onComplete={handleCutsceneComplete} />
       )}
 
-      {/* 3. PLAYING IN 3D SCENE */}
+      {/* 3. ESCENA DE JUEGO 3D */}
       {screen === 'playing' && (
         <div className="relative w-full h-full">
           <BakeryScene
@@ -783,7 +798,6 @@ export default function GamePage() {
             onOpenTutorial={() => setShowTutorial(true)}
           />
 
-          {/* Decoration Station Overlay */}
           {decoratingRecipe && (
             <DecorationMenu
               recipeId={decoratingRecipe}
@@ -797,7 +811,7 @@ export default function GamePage() {
         </div>
       )}
 
-      {/* 4. LEVEL SUMMARY MODAL */}
+      {/* 4. MODAL DE RESUMEN AL FINAL DEL NIVEL */}
       {screen === 'summary' && (
         <LevelSummaryModal
           levelNumber={currentLevelNumber}
@@ -819,7 +833,7 @@ export default function GamePage() {
         />
       )}
 
-      {/* 5. GAME WIN / GRAND OPENING MODAL */}
+      {/* 5. MODAL DE VICTORIA FINAL */}
       {screen === 'win' && (
         <GameWinModal
           totalCoins={progress.totalCoins}
@@ -831,7 +845,7 @@ export default function GamePage() {
         />
       )}
 
-      {/* GLOBAL MODALS */}
+      {/* 6. MODALES GLOBALES */}
       {showTutorial && (
         <MiniTutorialModal
           onComplete={handleTutorialComplete}
