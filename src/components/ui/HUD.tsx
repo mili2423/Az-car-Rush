@@ -24,6 +24,7 @@ interface HUDProps {
   toast?: { message: string; type: 'info' | 'success' | 'warning' } | null;
   mixingProgress?: number | null;
   availableProducts?: ProductId[];
+  onOpenTutorial?: () => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -45,6 +46,7 @@ export const HUD: React.FC<HUDProps> = ({
   toast,
   mixingProgress,
   availableProducts = ['cookie', 'cupcake', 'donut'],
+  onOpenTutorial,
 }) => {
   const [showRecipesModal, setShowRecipesModal] = useState(false);
 
@@ -199,7 +201,7 @@ export const HUD: React.FC<HUDProps> = ({
           </div>
 
           {/* Recipe book button (clickable) */}
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto flex items-center gap-2">
             <button
               onClick={() => setShowRecipesModal(true)}
               className="flex items-center gap-1.5 rounded-2xl border-2 border-pink-300 bg-pink-100 hover:bg-pink-200 px-3 py-2 text-xs font-black text-pink-800 shadow-xl backdrop-blur-md active:scale-95 transition-all"
@@ -207,6 +209,14 @@ export const HUD: React.FC<HUDProps> = ({
               <BookOpen className="w-4 h-4 text-pink-600" />
               <span>Recetas 📖</span>
             </button>
+            {onOpenTutorial && (
+              <button
+                onClick={onOpenTutorial}
+                className="flex items-center gap-1.5 rounded-2xl border-2 border-amber-300 bg-amber-100 hover:bg-amber-200 px-3 py-2 text-xs font-black text-amber-900 shadow-xl backdrop-blur-md active:scale-95 transition-all"
+              >
+                <span>Tutorial 💡</span>
+              </button>
+            )}
           </div>
         </div>
 

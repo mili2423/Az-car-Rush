@@ -155,6 +155,7 @@ export interface GameProgress {
   starsPerLevel: Record<number, number>; // levelNumber -> stars (1..3)
   upgrades: PlayerUpgrades;
   introSeen: boolean;
+  tutorialSeen?: boolean;
 }
 
 export type InteractableType = 

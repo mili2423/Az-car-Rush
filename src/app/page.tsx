@@ -31,6 +31,7 @@ import { MixerMinigame } from '@/components/ui/MixerMinigame';
 import { DecorationMenu } from '@/components/ui/DecorationMenu';
 import { LevelSummaryModal } from '@/components/ui/LevelSummaryModal';
 import { GameWinModal } from '@/components/ui/GameWinModal';
+import { MiniTutorialModal } from '@/components/ui/MiniTutorialModal';
 
 // Dynamically import Three.js 3D Scene with SSR disabled
 const BakeryScene = dynamic(
@@ -47,6 +48,7 @@ export default function GamePage() {
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
   // Modals
+  const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
   const [showCredits, setShowCredits] = useState<boolean>(false);
   const [showShop, setShowShop] = useState<boolean>(false);
@@ -219,18 +221,71 @@ export default function GamePage() {
     [progress.upgrades, spawnCustomer]
   );
 
+  // --- Dynamic Tutorial Guidance for Level 1 ---
+  const getDynamicTutorialTip = useCallback((): string | undefined => {
+    if (currentLevelNumber !== 1) return undefined;
+    if (!currentOrder) return 'Esperando al próximo cliente... 🛎️';
+    if (tray.type === 'empty') {
+      const target = currentOrder.items[0];
+      const rec = RECIPES[target];
+      if (!rec) return '1️⃣ Toma los ingredientes del pedido con [E] en la estantería';
+      const ings = rec.ingredients.map(i => `${INGREDIENTS[i].emoji} ${INGREDIENTS[i].name}`).join(', ');
+      return `1️⃣ Toma los ingredientes para ${rec.name} (${ings}) con [E] en la estantería`;
+    }
+    if (tray.type === 'ingredients') {
+      return '2️⃣ Ve a la Batidora Rosa y presiona [E] para batir la masa 🥣';
+    }
+    if (tray.type === 'mixed_dough') {
+      return '3️⃣ Lleva la masa al Horno y presiona [E] para hornear 🔥';
+    }
+    if (ovenState.isCooking) {
+      if (ovenState.isReady) {
+        return '4️⃣ ¡El postre está listo! Presiona [E] en el horno antes de que se queme 🔥';
+      }
+      return '4️⃣ Espera que suene el DING 🔔 en el horno...';
+    }
+    if (tray.type === 'baked') {
+      const rec = RECIPES[tray.recipeId];
+      if (rec?.requiresDecoration) {
+        return '5️⃣ Ve a la mesa de decoración 🎨 y presiona [E] para decorarlo';
+      }
+      return '6️⃣ ¡Ve al mostrador frente al cliente y presiona [E] para entregar! 🎁';
+    }
+    if (tray.type === 'finished') {
+      return '6️⃣ ¡Ve al mostrador frente al cliente y presiona [E] para entregar el pedido! 🎁';
+    }
+    if (tray.type === 'burnt') {
+      return '⚠️ El postre se quemó. Ve al tacho de basura 🗑️ y presiona [E] para vaciarlo';
+    }
+    return currentLevelDef.tutorialSteps?.[0];
+  }, [currentLevelNumber, currentOrder, tray, ovenState, currentLevelDef]);
+
   // --- Handle Play button from Home ---
   const handleHomePlay = () => {
     if (!progress.introSeen) {
       setScreen('cutscene');
+    } else if (!progress.tutorialSeen) {
+      setShowTutorial(true);
     } else {
-      startLevel(progress.unlockedLevel);
+      startLevel(progress.unlockedLevel || 1);
     }
   };
 
   const handleCutsceneComplete = () => {
     updateProgress({ introSeen: true });
-    startLevel(1);
+    if (!progress.tutorialSeen) {
+      setShowTutorial(true);
+    } else {
+      startLevel(1);
+    }
+  };
+
+  const handleTutorialComplete = () => {
+    updateProgress({ tutorialSeen: true });
+    setShowTutorial(false);
+    if (screen !== 'playing') {
+      startLevel(progress.unlockedLevel || 1);
+    }
   };
 
   // --- Game Loop (Timer, Patience, Oven) ---
@@ -665,6 +720,7 @@ export default function GamePage() {
         <StartScreen
           progress={progress}
           onPlay={handleHomePlay}
+          onOpenTutorial={() => setShowTutorial(true)}
           onOpenHowToPlay={() => setShowHowToPlay(true)}
           onOpenCredits={() => setShowCredits(true)}
           onOpenShop={() => setShowShop(true)}
@@ -714,10 +770,7 @@ export default function GamePage() {
             currentOrder={currentOrder}
             tray={tray}
             onClearTray={() => setTray({ type: 'empty' })}
-            tutorialTip={
-              currentLevelDef.tutorialSteps &&
-              currentLevelDef.tutorialSteps[tutorialStepIdx]
-            }
+            tutorialTip={getDynamicTutorialTip()}
             isMuted={isMuted}
             onToggleMute={toggleMute}
             onPause={() => {
@@ -727,6 +780,7 @@ export default function GamePage() {
             toast={toast}
             mixingProgress={mixingProgress}
             availableProducts={currentLevelDef.availableProducts}
+            onOpenTutorial={() => setShowTutorial(true)}
           />
 
           {/* Decoration Station Overlay */}
@@ -778,6 +832,12 @@ export default function GamePage() {
       )}
 
       {/* GLOBAL MODALS */}
+      {showTutorial && (
+        <MiniTutorialModal
+          onComplete={handleTutorialComplete}
+          onClose={() => setShowTutorial(false)}
+        />
+      )}
       {showHowToPlay && (
         <HowToPlayModal onClose={() => setShowHowToPlay(false)} />
       )}

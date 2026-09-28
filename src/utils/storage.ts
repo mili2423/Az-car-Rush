@@ -17,6 +17,7 @@ const DEFAULT_PROGRESS: GameProgress = {
   starsPerLevel: {},
   upgrades: DEFAULT_UPGRADES,
   introSeen: false,
+  tutorialSeen: false,
 };
 
 export const loadGameProgress = (): GameProgress => {

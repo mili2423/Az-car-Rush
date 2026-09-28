@@ -7,6 +7,7 @@ import { Play, BookOpen, Info, Star, Trophy, Sparkles, ShoppingBag, Volume2, Vol
 interface StartScreenProps {
   progress: GameProgress;
   onPlay: () => void;
+  onOpenTutorial: () => void;
   onOpenHowToPlay: () => void;
   onOpenCredits: () => void;
   onOpenShop: () => void;
@@ -17,6 +18,7 @@ interface StartScreenProps {
 export const StartScreen: React.FC<StartScreenProps> = ({
   progress,
   onPlay,
+  onOpenTutorial,
   onOpenHowToPlay,
   onOpenCredits,
   onOpenShop,
@@ -89,13 +91,21 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         ) : null}
 
         {/* Menu Buttons */}
-        <div className="flex flex-col gap-3.5 w-full max-w-xs">
+        <div className="flex flex-col gap-3 w-full max-w-xs">
           <button
             onClick={onPlay}
             className="group relative flex items-center justify-center gap-3 w-full py-4 rounded-2xl font-black text-lg bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 text-white shadow-xl shadow-pink-500/25 hover:shadow-pink-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             <Play className="w-5 h-5 fill-white" />
             <span>{progress.unlockedLevel > 1 ? `Continuar Día ${progress.unlockedLevel}` : 'Jugar'}</span>
+          </button>
+
+          <button
+            onClick={onOpenTutorial}
+            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-black text-sm bg-gradient-to-r from-amber-100 via-pink-100 to-rose-100 border-2 border-pink-300 text-pink-900 shadow-md hover:brightness-105 active:scale-[0.98] transition-all"
+          >
+            <Sparkles className="w-4 h-4 text-pink-600" />
+            <span>Mini Tutorial Guiado 🎓</span>
           </button>
 
           <button
@@ -116,7 +126,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
 
           <button
             onClick={onOpenCredits}
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-bold text-xs bg-transparent text-slate-500 hover:text-slate-800 transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl font-bold text-xs bg-transparent text-slate-500 hover:text-slate-800 transition-colors"
           >
             <Info className="w-3.5 h-3.5" />
             <span>Créditos</span>
