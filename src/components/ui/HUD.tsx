@@ -429,11 +429,18 @@ export const HUD: React.FC<HUDProps> = ({
                       border: `1px solid ${isDelivered ? '#86efac' : 'rgba(180,140,80,0.18)'}`,
                       opacity: isDelivered ? 0.6 : 1,
                     }}>
-                    <div className="flex items-center gap-1.5 truncate">
-                      <span className="text-sm">{recipe.emoji}</span>
-                      <span className="font-bold text-stone-800 truncate" style={{ textDecoration: isDelivered ? 'line-through' : 'none' }}>
-                        {recipe.name}
-                      </span>
+                    <div className="flex flex-col truncate">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="text-sm">{recipe.emoji}</span>
+                        <span className="font-bold text-stone-800 truncate" style={{ textDecoration: isDelivered ? 'line-through' : 'none' }}>
+                          {recipe.name}
+                        </span>
+                      </div>
+                      {!isDelivered && (
+                        <span className="text-[10px] text-stone-400 leading-tight ml-6 truncate">
+                          {recipe.ingredients.map(i => INGREDIENTS[i].name).join(' + ')}
+                        </span>
+                      )}
                     </div>
                     <span className="text-[11px] font-black text-amber-800 shrink-0 ml-2">${recipe.price}</span>
                   </div>
