@@ -347,6 +347,28 @@ export const Customer3D: React.FC<Customer3DProps> = ({ currentOrder }) => {
   const leftEyeBrowRef = useRef<Group>(null);
   const rightEyeBrowRef = useRef<Group>(null);
 
+  // Estado para animar la reacción de salida (satisfecho vs enojado) al terminar pedido
+  const lastCustomerRef = useRef<{
+    type: CustomerType;
+    wasSatisfied: boolean;
+    timestamp: number;
+  } | null>(null);
+
+  const prevOrderRef = useRef<CustomerOrder | null>(currentOrder);
+
+  // Detectar cuándo finaliza un pedido para retener al cliente durante su reacción
+  if (currentOrder && currentOrder !== prevOrderRef.current) {
+    prevOrderRef.current = currentOrder;
+  } else if (!currentOrder && prevOrderRef.current) {
+    const wasSatisfied = prevOrderRef.current.currentPatienceSeconds > 0;
+    lastCustomerRef.current = {
+      type: prevOrderRef.current.customerType,
+      wasSatisfied,
+      timestamp: Date.now(),
+    };
+    prevOrderRef.current = null;
+  }
+
   // Geometrías principales compartidas para el cuerpo base Chibi
   const headGeo = useMemo(() => new SphereGeometry(0.34, 20, 20), []);
   const bodyGeo = useMemo(() => new CylinderGeometry(0.32, 0.42, 0.72, 16), []);
@@ -357,18 +379,76 @@ export const Customer3D: React.FC<Customer3DProps> = ({ currentOrder }) => {
   const browGeo = useMemo(() => new BoxGeometry(0.1, 0.024, 0.02), []);
   const mouthGeo = useMemo(() => new BoxGeometry(0.08, 0.025, 0.02), []);
 
+  // Determinar si mostramos cliente activo o cliente en reacción de salida
+  const isExiting = !currentOrder && lastCustomerRef.current !== null;
+  const exitData = isExiting ? lastCustomerRef.current : null;
+
   useFrame(({ clock }) => {
-    if (!groupRef.current || !currentOrder) return;
+    if (!groupRef.current) return;
 
     const t = clock.getElapsedTime();
+
+    // Caso A: Reacción de Salida (Satisfecho / Enojado tras completar o fallar pedido)
+    if (exitData) {
+      const elapsed = (Date.now() - exitData.timestamp) / 1000;
+      if (elapsed > 1.4) {
+        lastCustomerRef.current = null;
+        return;
+      }
+
+      // Desplazamiento suave retrocediendo hacia la puerta de salida
+      groupRef.current.position.z = 5.3 + elapsed * 0.7;
+
+      if (exitData.wasSatisfied) {
+        // --- REACCIÓN SATISFECHO: Saltito alegre y cabeza de fiesta ---
+        groupRef.current.position.y = 0.45 + Math.abs(Math.sin(elapsed * 12)) * 0.16;
+        if (headRef.current) {
+          headRef.current.rotation.z = Math.sin(elapsed * 10) * 0.12;
+          headRef.current.rotation.x = -0.1;
+        }
+        if (leftEyeBrowRef.current && rightEyeBrowRef.current) {
+          leftEyeBrowRef.current.rotation.z = 0.15;
+          rightEyeBrowRef.current.rotation.z = -0.15;
+          leftEyeBrowRef.current.position.y = 0.11;
+          rightEyeBrowRef.current.position.y = 0.11;
+        }
+        if (sparklesRef.current) {
+          sparklesRef.current.rotation.y = elapsed * 3.5;
+        }
+      } else {
+        // --- REACCIÓN ENOJADO / TIMEOUT: Sacudida de cabeza y pisotón ---
+        groupRef.current.position.y = 0.45;
+        if (headRef.current) {
+          headRef.current.rotation.y = Math.sin(elapsed * 16) * 0.22;
+          headRef.current.rotation.x = 0.12;
+        }
+        if (footRef.current) {
+          footRef.current.rotation.x = Math.abs(Math.sin(elapsed * 14)) * 0.45;
+        }
+        if (leftEyeBrowRef.current && rightEyeBrowRef.current) {
+          leftEyeBrowRef.current.rotation.z = -0.45;
+          rightEyeBrowRef.current.rotation.z = 0.45;
+          leftEyeBrowRef.current.position.y = 0.05;
+          rightEyeBrowRef.current.position.y = 0.05;
+        }
+      }
+      return;
+    }
+
+    // Caso B: Espera Activa con Pedido Vigente
+    if (!currentOrder) return;
+
     const patienceRatio = currentOrder.currentPatienceSeconds / currentOrder.maxPatienceSeconds;
     const type = currentOrder.customerType;
+
+    // Resetear posición Z fija frente al mostrador
+    groupRef.current.position.z = 5.3;
 
     // 1. Dinámica de cuerpo según tipo y nivel de paciencia
     if (type === 'impatient') {
       // Impaciente: respiración rápida + foot tapping rítmico
       const nervousSpeed = patienceRatio < 0.3 ? 14 : 9;
-      groupRef.current.position.y = Math.sin(t * nervousSpeed) * (patienceRatio < 0.3 ? 0.04 : 0.025);
+      groupRef.current.position.y = 0.45 + Math.sin(t * nervousSpeed) * (patienceRatio < 0.3 ? 0.04 : 0.025);
       groupRef.current.rotation.z = Math.sin(t * (nervousSpeed * 1.2)) * 0.03;
 
       // Movimiento de foot tapping en el piso
@@ -393,7 +473,7 @@ export const Customer3D: React.FC<Customer3DProps> = ({ currentOrder }) => {
       }
     } else if (type === 'frequent') {
       // Frecuente: balanceo suave y alegre de izquierda a derecha (tarareando)
-      groupRef.current.position.y = Math.sin(t * 3.5) * 0.04;
+      groupRef.current.position.y = 0.45 + Math.sin(t * 3.5) * 0.04;
       groupRef.current.rotation.z = Math.sin(t * 2.2) * 0.06;
 
       // El extremo de la bufanda se balancea con física inercial
@@ -402,7 +482,7 @@ export const Customer3D: React.FC<Customer3DProps> = ({ currentOrder }) => {
       }
     } else if (type === 'special') {
       // Especial / VIP: respiración suave, imponente y digna
-      groupRef.current.position.y = Math.sin(t * 2.0) * 0.025;
+      groupRef.current.position.y = 0.45 + Math.sin(t * 2.0) * 0.025;
       groupRef.current.rotation.z = 0;
 
       // Partículas de aura dorada rotando alrededor
@@ -411,7 +491,7 @@ export const Customer3D: React.FC<Customer3DProps> = ({ currentOrder }) => {
       }
     } else {
       // Normal: respiración suave y tranquila
-      groupRef.current.position.y = Math.sin(t * 2.8) * 0.035;
+      groupRef.current.position.y = 0.45 + Math.sin(t * 2.8) * 0.035;
       groupRef.current.rotation.z = 0;
     }
 
@@ -433,14 +513,18 @@ export const Customer3D: React.FC<Customer3DProps> = ({ currentOrder }) => {
     }
   });
 
-  if (!currentOrder) return null;
+  if (!currentOrder && !exitData) return null;
 
-  const patienceRatio = currentOrder.currentPatienceSeconds / currentOrder.maxPatienceSeconds;
+  const activeType: CustomerType = currentOrder ? currentOrder.customerType : (exitData?.type ?? 'normal');
+  const patienceRatio = currentOrder
+    ? currentOrder.currentPatienceSeconds / currentOrder.maxPatienceSeconds
+    : (exitData?.wasSatisfied ? 1.0 : 0.0);
+
   const patienceColor =
     patienceRatio > 0.6 ? '#22c55e' : patienceRatio > 0.3 ? '#eab308' : '#ef4444';
 
   // Color de ropa base según el tipo de cliente
-  const type = currentOrder.customerType;
+  const type = activeType;
   const bodyColor =
     type === 'normal'
       ? '#6ee7b7' // Menta pastel
@@ -579,41 +663,76 @@ export const Customer3D: React.FC<Customer3DProps> = ({ currentOrder }) => {
       </group>
 
       {/* ============================================================== */}
-      {/* 4. HALO FLOTANTE DE PACIENCIA (PASTRY DONUT PATIENCE METER)    */}
+      {/* 4. FEEDBACK DE REACCIÓN O HALO FLOTANTE DE PACIENCIA           */}
       {/* ============================================================== */}
-      <group position={[0, 2.15, 0]}>
-        {/* Anillo fondo oscuro */}
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.28, 0.03, 8, 28]} />
-          <meshStandardMaterial color="#1e293b" />
-          <ToonOutline geometry={new TorusGeometry(0.28, 0.03, 8, 28)} thickness={0.012} />
-        </mesh>
+      {currentOrder && !isExiting ? (
+        <group position={[0, 2.15, 0]}>
+          {/* Anillo fondo oscuro */}
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.28, 0.03, 8, 28]} />
+            <meshStandardMaterial color="#1e293b" />
+            <ToonOutline geometry={new TorusGeometry(0.28, 0.03, 8, 28)} thickness={0.012} />
+          </mesh>
 
-        {/* Anillo luminoso de progreso */}
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry
-            args={[0.28, 0.045, 8, 28, Math.PI * 2 * Math.max(0.04, patienceRatio)]}
-          />
-          <meshStandardMaterial
-            color={patienceColor}
-            emissive={patienceColor}
-            emissiveIntensity={0.8}
-            roughness={0.2}
-          />
-        </mesh>
-
-        {/* Ícono emoji flotante miniatura sobre el halo */}
-        <group position={[0, 0.16, 0]}>
-          <mesh>
-            <sphereGeometry args={[0.06, 12, 12]} />
+          {/* Anillo luminoso de progreso */}
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry
+              args={[0.28, 0.045, 8, 28, Math.PI * 2 * Math.max(0.04, patienceRatio)]}
+            />
             <meshStandardMaterial
               color={patienceColor}
               emissive={patienceColor}
-              emissiveIntensity={0.5}
+              emissiveIntensity={0.8}
+              roughness={0.2}
             />
           </mesh>
+
+          {/* Ícono emoji flotante miniatura sobre el halo */}
+          <group position={[0, 0.16, 0]}>
+            <mesh>
+              <sphereGeometry args={[0.06, 12, 12]} />
+              <meshStandardMaterial
+                color={patienceColor}
+                emissive={patienceColor}
+                emissiveIntensity={0.5}
+              />
+            </mesh>
+          </group>
         </group>
-      </group>
+      ) : isExiting && exitData?.wasSatisfied ? (
+        /* Reacción feliz flotante: Corazón / Esfera Rosa Brillante con chispas */
+        <group position={[0, 2.15, 0]}>
+          <mesh>
+            <sphereGeometry args={[0.12, 16, 16]} />
+            <meshStandardMaterial
+              color="#fb7185"
+              emissive="#f43f5e"
+              emissiveIntensity={0.8}
+              roughness={0.2}
+            />
+          </mesh>
+          <mesh position={[-0.14, 0.08, 0]} rotation={[0, 0, 0.4]}>
+            <coneGeometry args={[0.05, 0.1, 4]} />
+            <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.9} />
+          </mesh>
+          <mesh position={[0.14, 0.08, 0]} rotation={[0, 0, -0.4]}>
+            <coneGeometry args={[0.05, 0.1, 4]} />
+            <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.9} />
+          </mesh>
+        </group>
+      ) : isExiting && !exitData?.wasSatisfied ? (
+        /* Reacción de enfado: Cruz roja de comic 💢 pulsante */
+        <group position={[0, 2.15, 0]}>
+          <mesh rotation={[0, 0, Math.PI / 4]}>
+            <boxGeometry args={[0.05, 0.22, 0.04]} />
+            <meshStandardMaterial color="#ef4444" emissive="#dc2626" emissiveIntensity={0.9} />
+          </mesh>
+          <mesh rotation={[0, 0, -Math.PI / 4]}>
+            <boxGeometry args={[0.05, 0.22, 0.04]} />
+            <meshStandardMaterial color="#ef4444" emissive="#dc2626" emissiveIntensity={0.9} />
+          </mesh>
+        </group>
+      ) : null}
     </group>
   );
 };

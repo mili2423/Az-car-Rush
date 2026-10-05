@@ -86,7 +86,7 @@ const ChefHand: React.FC<{ side: 'left' | 'right'; isHoldingWeight: boolean }> =
             ]}
           >
             <mesh geometry={fingerGeo} castShadow>
-              <meshStandardMaterial color="#fcd34d" roughness={0.35} />
+              <meshStandardMaterial color="#fed7aa" roughness={0.4} />
               <ToonOutline geometry={fingerGeo} thickness={0.012} color="#2a1714" />
             </mesh>
           </group>
