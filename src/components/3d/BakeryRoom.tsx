@@ -136,15 +136,34 @@ export const BakeryRoom: React.FC = () => {
         })}
       </group>
 
-      {/* Warm Ambient & Station Lighting */}
-      <ambientLight color="#fff7ed" intensity={0.65} />
+      {/* ============================================================== */}
+      {/* 3-POINT TOON LIGHTING (Key, Fill & Golden Rim Light)           */}
+      {/* ============================================================== */}
+      {/* 1. Ambient Warm Glow */}
+      <ambientLight color="#fff7ed" intensity={0.6} />
+
+      {/* 2. Key Light (Principal frontal-lateral cálida) */}
       <directionalLight
-        position={[4, 8, 4]}
-        intensity={0.8}
+        position={[3.5, 7, 2.5]}
+        intensity={0.9}
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
-        color="#fff1f2"
+        color="#fff5eb"
+      />
+
+      {/* 3. Fill Light (Relleno suave pastel que elimina sombras duras) */}
+      <directionalLight
+        position={[-4.5, 3.5, 1.0]}
+        intensity={0.45}
+        color="#fce7f3"
+      />
+
+      {/* 4. Golden Rim Light (Luz de contorno trasera para resaltar siluetas de clientes y manos) */}
+      <directionalLight
+        position={[-0.8, 3.2, 7.2]}
+        intensity={1.2}
+        color="#fef08a"
       />
       
       {/* Pendant Lights hanging from ceiling */}

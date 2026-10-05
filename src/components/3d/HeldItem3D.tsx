@@ -1,42 +1,172 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Group, Vector3, Quaternion, MathUtils } from 'three';
+import { Group, Vector3, Quaternion, CylinderGeometry, BoxGeometry, CapsuleGeometry, TorusGeometry } from 'three';
 import { TrayState, ProductId, IngredientId } from '@/types/game';
+import { ToonOutline } from './ToonOutline';
 
 interface HeldItem3DProps {
   tray: TrayState;
   isMoving: boolean;
 }
 
+/**
+ * Componente de mano estilizada de pastelero/chef en primera persona.
+ * Presenta manga de chaqueta blanca, puño remangado rosa con botón dorado,
+ * palma toon y 4 dedos articulados que sujetan por debajo + pulgar opuesto por encima del borde.
+ */
+const ChefHand: React.FC<{ side: 'left' | 'right'; isHoldingWeight: boolean }> = ({
+  side,
+  isHoldingWeight,
+}) => {
+  const isLeft = side === 'left';
+  const sign = isLeft ? -1 : 1;
+
+  // Geometrías compartidas para óptimo rendimiento
+  const sleeveGeo = useMemo(() => new CylinderGeometry(0.08, 0.095, 0.38, 16), []);
+  const cuffGeo = useMemo(() => new CylinderGeometry(0.098, 0.098, 0.07, 16), []);
+  const buttonGeo = useMemo(() => new CylinderGeometry(0.012, 0.012, 0.01, 8), []);
+  const wristGeo = useMemo(() => new CylinderGeometry(0.05, 0.055, 0.06, 12), []);
+  const palmGeo = useMemo(() => new BoxGeometry(0.08, 0.045, 0.1), []);
+  const fingerGeo = useMemo(() => new CapsuleGeometry(0.014, 0.05, 6, 8), []);
+  const thumbGeo = useMemo(() => new CapsuleGeometry(0.016, 0.055, 6, 8), []);
+
+  return (
+    <group
+      position={[sign * 0.34, -0.06, 0.06]}
+      rotation={[0.18, -sign * 0.28, sign * 0.15]}
+    >
+      {/* 1. Manga de la chaqueta de chef (Blanco inmaculado con contorno toon) */}
+      <group position={[sign * 0.08, -0.16, 0.16]} rotation={[0.65, sign * 0.35, -sign * 0.25]}>
+        <mesh geometry={sleeveGeo} castShadow>
+          <meshStandardMaterial color="#ffffff" roughness={0.4} />
+          <ToonOutline geometry={sleeveGeo} thickness={0.018} color="#2a1714" />
+        </mesh>
+
+        {/* 2. Puño remangado pastelero (Rosa frambuesa con contorno) */}
+        <group position={[0, -0.16, 0]}>
+          <mesh geometry={cuffGeo} castShadow>
+            <meshStandardMaterial color="#ec4899" roughness={0.35} />
+            <ToonOutline geometry={cuffGeo} thickness={0.018} color="#2a1714" />
+          </mesh>
+
+          {/* Botón dorado del puño */}
+          <mesh
+            geometry={buttonGeo}
+            position={[sign * 0.1, 0, 0]}
+            rotation={[0, 0, sign * Math.PI / 2]}
+          >
+            <meshStandardMaterial color="#fbbf24" metalness={0.8} roughness={0.2} />
+          </mesh>
+        </group>
+      </group>
+
+      {/* 3. Muñeca */}
+      <group position={[sign * 0.02, -0.06, 0.04]} rotation={[0.3, sign * 0.2, 0]}>
+        <mesh geometry={wristGeo} castShadow>
+          <meshStandardMaterial color="#fed7aa" roughness={0.4} />
+        </mesh>
+      </group>
+
+      {/* 4. Palma de la mano estilizada (Chibi/Toon) */}
+      <group position={[0, -0.02, 0]} rotation={[0.1, 0, sign * 0.05]}>
+        <mesh geometry={palmGeo} castShadow>
+          <meshStandardMaterial color="#fed7aa" roughness={0.4} />
+          <ToonOutline geometry={palmGeo} thickness={0.016} color="#2a1714" />
+        </mesh>
+
+        {/* 5. Cuatro dedos apoyando firmemente bajo la bandeja */}
+        {[-0.035, -0.012, 0.012, 0.035].map((zOffset, idx) => (
+          <group
+            key={`finger-${idx}`}
+            position={[-sign * 0.045, -0.015, zOffset]}
+            rotation={[
+              0,
+              0,
+              -sign * (0.8 + (isHoldingWeight ? 0.2 : 0))
+            ]}
+          >
+            <mesh geometry={fingerGeo} castShadow>
+              <meshStandardMaterial color="#fcd34d" roughness={0.35} />
+              <ToonOutline geometry={fingerGeo} thickness={0.012} color="#2a1714" />
+            </mesh>
+          </group>
+        ))}
+
+        {/* 6. Pulgar opuesto sujetando por encima del borde dorado */}
+        <group
+          position={[-sign * 0.035, 0.032, 0.02]}
+          rotation={[
+            0.3,
+            sign * 0.6,
+            sign * 0.55
+          ]}
+        >
+          <mesh geometry={thumbGeo} castShadow>
+            <meshStandardMaterial color="#fed7aa" roughness={0.4} />
+            <ToonOutline geometry={thumbGeo} thickness={0.014} color="#2a1714" />
+          </mesh>
+          {/* Uña sutil toon */}
+          <mesh position={[0, 0.025, 0.014]} rotation={[-0.2, 0, 0]}>
+            <boxGeometry args={[0.014, 0.014, 0.005]} />
+            <meshStandardMaterial color="#fef3c7" roughness={0.2} />
+          </mesh>
+        </group>
+      </group>
+    </group>
+  );
+};
+
 export const HeldItem3D: React.FC<HeldItem3DProps> = ({ tray, isMoving }) => {
   const heldGroupRef = useRef<Group>(null);
-  const targetPos = useRef(new Vector3());
   const currentPos = useRef(new Vector3());
-  const targetQuat = useRef(new Quaternion());
   const currentQuat = useRef(new Quaternion());
+
+  // Física de rebote elástico (Spring Ease) al cambiar de objeto o estado
+  const springY = useRef(0);
+  const springVel = useRef(0);
+  const prevTrayKey = useRef<string>('');
+
+  // Detectar cambios en la bandeja para aplicar impulso físico elástico
+  const trayKey = tray.type === 'ingredients' ? `ing-${tray.items.join(',')}` : tray.type;
+  if (trayKey !== prevTrayKey.current) {
+    if (prevTrayKey.current !== '') {
+      // Impulso hacia abajo al recibir peso o hacia arriba al vaciar
+      springVel.current = tray.type === 'empty' ? 0.05 : -0.06;
+    }
+    prevTrayKey.current = trayKey;
+  }
+
+  const isHoldingWeight = tray.type !== 'empty';
 
   useFrame(({ camera, clock }, delta) => {
     if (!heldGroupRef.current) return;
 
-    // Calculate ideal local offset in front of camera
-    // x = 0.28 (right), y = -0.28 (bottom), z = -0.65 (in front)
-    const localOffset = new Vector3(0.25, -0.26, -0.62);
+    // Simulación física de resorte amortiguado (Damped Spring)
+    const stiffness = 240;
+    const damping = 16;
+    const springForce = -stiffness * springY.current;
+    springVel.current += (springForce - damping * springVel.current) * delta;
+    springY.current += springVel.current * delta;
 
-    // Natural bobbing when walking
+    // Calcular offset ideal local frente a la cámara
+    const localOffset = new Vector3(0.25, -0.26 + springY.current, -0.62);
+
+    // Movimiento orgánico al caminar (bobbing) o respiración en reposo
     const t = clock.getElapsedTime();
     if (isMoving) {
       localOffset.y += Math.sin(t * 10) * 0.018;
       localOffset.x += Math.cos(t * 5) * 0.012;
       localOffset.z += Math.sin(t * 8) * 0.008;
     } else {
-      // Subtle idle breathing
+      // Respiración sutil
       localOffset.y += Math.sin(t * 2) * 0.004;
+      localOffset.x += Math.cos(t * 1.5) * 0.002;
     }
 
-    // Transform local offset to world position
+    // Transformar a posición en el mundo
     const desiredPos = localOffset.applyQuaternion(camera.quaternion).add(camera.position);
 
-    // Smooth lerp for dynamic viewmodel sway when looking around
+    // Suavizado lerp para inercia al mover la vista
     const lerpFactor = Math.min(1.0, delta * 18);
     currentPos.current.lerp(desiredPos, lerpFactor);
     currentQuat.current.slerp(camera.quaternion, lerpFactor);
@@ -48,45 +178,10 @@ export const HeldItem3D: React.FC<HeldItem3DProps> = ({ tray, isMoving }) => {
   return (
     <group ref={heldGroupRef}>
       {/* ============================================================== */}
-      {/* BAKER'S CHEF MITTENS (Hands holding the tray) */}
+      {/* MANOS ESTILIZADAS DE PASTELERO (CHEF PASTRY HANDS)             */}
       {/* ============================================================== */}
-      <group position={[0, -0.06, 0]}>
-        {/* Left hand mitten */}
-        <group position={[-0.32, -0.02, 0.05]} rotation={[0.2, 0.4, -0.2]}>
-          <mesh castShadow>
-            <capsuleGeometry args={[0.07, 0.16, 8, 12]} />
-            <meshStandardMaterial color="#fce7f3" roughness={0.4} />
-          </mesh>
-          {/* Thumb */}
-          <mesh position={[0.05, 0.04, 0.04]} rotation={[0.4, 0.2, 0]}>
-            <capsuleGeometry args={[0.035, 0.08, 6, 8]} />
-            <meshStandardMaterial color="#fce7f3" roughness={0.4} />
-          </mesh>
-          {/* Cuff band */}
-          <mesh position={[-0.02, -0.09, -0.02]}>
-            <torusGeometry args={[0.07, 0.02, 8, 16]} />
-            <meshStandardMaterial color="#ec4899" />
-          </mesh>
-        </group>
-
-        {/* Right hand mitten */}
-        <group position={[0.32, -0.02, 0.05]} rotation={[0.2, -0.4, 0.2]}>
-          <mesh castShadow>
-            <capsuleGeometry args={[0.07, 0.16, 8, 12]} />
-            <meshStandardMaterial color="#fce7f3" roughness={0.4} />
-          </mesh>
-          {/* Thumb */}
-          <mesh position={[-0.05, 0.04, 0.04]} rotation={[0.4, -0.2, 0]}>
-            <capsuleGeometry args={[0.035, 0.08, 6, 8]} />
-            <meshStandardMaterial color="#fce7f3" roughness={0.4} />
-          </mesh>
-          {/* Cuff band */}
-          <mesh position={[0.02, -0.09, -0.02]}>
-            <torusGeometry args={[0.07, 0.02, 8, 16]} />
-            <meshStandardMaterial color="#ec4899" />
-          </mesh>
-        </group>
-      </group>
+      <ChefHand side="left" isHoldingWeight={isHoldingWeight} />
+      <ChefHand side="right" isHoldingWeight={isHoldingWeight} />
 
       {/* ============================================================== */}
       {/* PASTEL BAKING TRAY */}
