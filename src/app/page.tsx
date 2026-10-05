@@ -99,6 +99,7 @@ export default function GamePage() {
   // --------------------------------------------------------------------------
   const [currentOrder, setCurrentOrder] = useState<CustomerOrder | null>(null);
   const [customersRemaining, setCustomersRemaining] = useState<number>(3);
+  const [isAwaitingNextCustomer, setIsAwaitingNextCustomer] = useState<boolean>(false);
 
   const [summaryResult, setSummaryResult] = useState<{
     isVictory: boolean;
@@ -349,7 +350,11 @@ export default function GamePage() {
               handleEndLevel(money >= currentLevelDef.targetMoney);
               return 0;
             }
-            setTimeout(() => spawnCustomer(currentLevelDef), 1000);
+            setIsAwaitingNextCustomer(true);
+            setTimeout(() => {
+              setIsAwaitingNextCustomer(false);
+              spawnCustomer(currentLevelDef);
+            }, 2200);
             return rem;
           });
           return null;
@@ -612,8 +617,9 @@ export default function GamePage() {
         const rec = RECIPES[tray.recipeId];
         if (rec.requiresDecoration) {
           sounds.playPickup();
-          setTray({ type: 'finished', recipeId: tray.recipeId });
-          showToast(`${rec.name} decorado con ${rec.decorationName}. ¡Listo para entregar!`, 'success');
+          // Abre el minijuego de decoración
+          setDecoratingRecipe(tray.recipeId);
+          document.exitPointerLock?.();
         } else {
           showToast(`${rec.name} no requiere decoración. ¡Entrégalo al cliente!`, 'info');
         }
@@ -656,19 +662,26 @@ export default function GamePage() {
           if (idx > -1) remainingItems.splice(idx, 1);
 
           if (remainingItems.length === 0) {
+            // Primero null = dispara animación de salida del cliente actual
+            setCurrentOrder(null);
             setCustomersRemaining(rem => {
               const nextRem = rem - 1;
               if (nextRem <= 0) {
+                // Esperar a que el cliente salga antes de terminar el nivel
                 setTimeout(() => {
                   handleEndLevel(true);
-                }, 800);
+                }, 2000);
                 return 0;
               } else {
-                setTimeout(() => spawnCustomer(currentLevelDef), 800);
+                // Esperar la animación de salida (1.4s) + pausa (0.6s) antes de que entre el siguiente
+                setIsAwaitingNextCustomer(true);
+                setTimeout(() => {
+                  setIsAwaitingNextCustomer(false);
+                  spawnCustomer(currentLevelDef);
+                }, 2200);
                 return nextRem;
               }
             });
-            setCurrentOrder(null);
           } else {
             const bonusPatience = 40;
             const updatedPatience = Math.min(
@@ -805,11 +818,29 @@ export default function GamePage() {
           {decoratingRecipe && (
             <DecorationMenu
               recipeId={decoratingRecipe}
-              onDecorate={() => {
-                setTray({ type: 'finished', recipeId: decoratingRecipe });
+              onDecorate={(isCorrect: boolean) => {
+                if (isCorrect) {
+                  setTray({ type: 'finished', recipeId: decoratingRecipe });
+                } else {
+                  // Decoración incorrecta: se marca como finished pero con penalización en score
+                  setTray({ type: 'finished', recipeId: decoratingRecipe });
+                  setScore(s => Math.max(0, s - 80));
+                  showToast('Decoración incorrecta. El cliente lo notará (-80 pts)', 'warning');
+                }
                 setDecoratingRecipe(null);
+                // Volver a bloquear el puntero
+                setTimeout(() => {
+                  const canvas = document.querySelector('canvas');
+                  canvas?.requestPointerLock?.();
+                }, 100);
               }}
-              onCancel={() => setDecoratingRecipe(null)}
+              onCancel={() => {
+                setDecoratingRecipe(null);
+                setTimeout(() => {
+                  const canvas = document.querySelector('canvas');
+                  canvas?.requestPointerLock?.();
+                }, 100);
+              }}
             />
           )}
         </div>

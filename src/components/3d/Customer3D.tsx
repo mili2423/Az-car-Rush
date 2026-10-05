@@ -347,6 +347,18 @@ export const Customer3D: React.FC<Customer3DProps> = ({ currentOrder }) => {
   const leftEyeBrowRef = useRef<Group>(null);
   const rightEyeBrowRef = useRef<Group>(null);
 
+  // Entrada: timestamp cuando apareció el cliente actual
+  const entryTimestampRef = useRef<number | null>(null);
+  const prevOrderIdRef = useRef<string | null>(null);
+
+  // Detectar cliente nuevo para disparar animación de entrada
+  if (currentOrder && currentOrder.id !== prevOrderIdRef.current) {
+    prevOrderIdRef.current = currentOrder.id;
+    entryTimestampRef.current = Date.now();
+  } else if (!currentOrder) {
+    prevOrderIdRef.current = null;
+  }
+
   // Estado para animar la reacción de salida (satisfecho vs enojado) al terminar pedido
   const lastCustomerRef = useRef<{
     type: CustomerType;
@@ -435,7 +447,27 @@ export const Customer3D: React.FC<Customer3DProps> = ({ currentOrder }) => {
       return;
     }
 
-    // Caso B: Espera Activa con Pedido Vigente
+    // Caso B: Animación de ENTRADA caminando hacia el mostrador
+    if (currentOrder && entryTimestampRef.current !== null) {
+      const elapsed = (Date.now() - entryTimestampRef.current) / 1000;
+      const WALK_DURATION = 1.2;
+      if (elapsed < WALK_DURATION) {
+        const progress = elapsed / WALK_DURATION;
+        // Easing: suavizado de entrada
+        const eased = 1 - Math.pow(1 - progress, 3);
+        // Viene desde z=9 hasta z=5.3
+        const startZ = 9.0;
+        const targetZ = 5.3;
+        groupRef.current.position.z = startZ + (targetZ - startZ) * eased;
+        // Piernas caminando durante la entrada
+        groupRef.current.position.y = 0.45 + Math.abs(Math.sin(elapsed * 8)) * 0.06;
+        return;
+      } else {
+        entryTimestampRef.current = null; // Entrada terminada
+      }
+    }
+
+    // Caso C: Espera Activa con Pedido Vigente
     if (!currentOrder) return;
 
     const patienceRatio = currentOrder.currentPatienceSeconds / currentOrder.maxPatienceSeconds;

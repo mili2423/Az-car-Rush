@@ -32,17 +32,17 @@ const ChefHand: React.FC<{ side: 'left' | 'right'; isHoldingWeight: boolean }> =
 
   return (
     <group
-      position={[sign * 0.34, -0.06, 0.06]}
-      rotation={[0.18, -sign * 0.28, sign * 0.15]}
+      position={[sign * 0.22, -0.12, 0.0]}
+      rotation={[0.05, sign * 0.12, sign * 0.05]}
     >
-      {/* 1. Manga de la chaqueta de chef (Blanco inmaculado con contorno toon) */}
-      <group position={[sign * 0.08, -0.16, 0.16]} rotation={[0.65, sign * 0.35, -sign * 0.25]}>
+      {/* 1. Manga de la chaqueta de chef */}
+      <group position={[sign * 0.04, -0.12, 0.22]} rotation={[0.9, sign * 0.18, -sign * 0.08]}>
         <mesh geometry={sleeveGeo} castShadow>
           <meshStandardMaterial color="#ffffff" roughness={0.4} />
           <ToonOutline geometry={sleeveGeo} thickness={0.018} color="#2a1714" />
         </mesh>
 
-        {/* 2. Puño remangado pastelero (Rosa frambuesa con contorno) */}
+        {/* 2. Puño remangado pastelero */}
         <group position={[0, -0.16, 0]}>
           <mesh geometry={cuffGeo} castShadow>
             <meshStandardMaterial color="#ec4899" roughness={0.35} />
@@ -61,14 +61,14 @@ const ChefHand: React.FC<{ side: 'left' | 'right'; isHoldingWeight: boolean }> =
       </group>
 
       {/* 3. Muñeca */}
-      <group position={[sign * 0.02, -0.06, 0.04]} rotation={[0.3, sign * 0.2, 0]}>
+      <group position={[sign * 0.01, -0.04, 0.04]} rotation={[-0.1, sign * 0.1, 0]}>
         <mesh geometry={wristGeo} castShadow>
           <meshStandardMaterial color="#fed7aa" roughness={0.4} />
         </mesh>
       </group>
 
       {/* 4. Palma de la mano estilizada (Chibi/Toon) */}
-      <group position={[0, -0.02, 0]} rotation={[0.1, 0, sign * 0.05]}>
+      <group position={[0, 0.0, 0.0]} rotation={[0.05, 0, sign * 0.04]}>
         <mesh geometry={palmGeo} castShadow>
           <meshStandardMaterial color="#fed7aa" roughness={0.4} />
           <ToonOutline geometry={palmGeo} thickness={0.016} color="#2a1714" />
@@ -78,11 +78,11 @@ const ChefHand: React.FC<{ side: 'left' | 'right'; isHoldingWeight: boolean }> =
         {[-0.035, -0.012, 0.012, 0.035].map((zOffset, idx) => (
           <group
             key={`finger-${idx}`}
-            position={[-sign * 0.045, -0.015, zOffset]}
+            position={[-sign * 0.04, -0.012, zOffset]}
             rotation={[
               0,
               0,
-              -sign * (0.8 + (isHoldingWeight ? 0.2 : 0))
+              -sign * (0.9 + (isHoldingWeight ? 0.15 : 0))
             ]}
           >
             <mesh geometry={fingerGeo} castShadow>
@@ -92,13 +92,13 @@ const ChefHand: React.FC<{ side: 'left' | 'right'; isHoldingWeight: boolean }> =
           </group>
         ))}
 
-        {/* 6. Pulgar opuesto sujetando por encima del borde dorado */}
+        {/* 6. Pulgar opuesto */}
         <group
-          position={[-sign * 0.035, 0.032, 0.02]}
+          position={[-sign * 0.038, 0.028, 0.02]}
           rotation={[
-            0.3,
-            sign * 0.6,
-            sign * 0.55
+            0.25,
+            sign * 0.5,
+            sign * 0.5
           ]}
         >
           <mesh geometry={thumbGeo} castShadow>
@@ -130,8 +130,7 @@ export const HeldItem3D: React.FC<HeldItem3DProps> = ({ tray, isMoving }) => {
   const trayKey = tray.type === 'ingredients' ? `ing-${tray.items.join(',')}` : tray.type;
   if (trayKey !== prevTrayKey.current) {
     if (prevTrayKey.current !== '') {
-      // Impulso hacia abajo al recibir peso o hacia arriba al vaciar
-      springVel.current = tray.type === 'empty' ? 0.05 : -0.06;
+      springVel.current = tray.type === 'empty' ? 0.04 : -0.05;
     }
     prevTrayKey.current = trayKey;
   }
@@ -141,25 +140,24 @@ export const HeldItem3D: React.FC<HeldItem3DProps> = ({ tray, isMoving }) => {
   useFrame(({ camera, clock }, delta) => {
     if (!heldGroupRef.current) return;
 
-    // Simulación física de resorte amortiguado (Damped Spring)
+    // Simulación física de resorte amortiguado
     const stiffness = 240;
     const damping = 16;
     const springForce = -stiffness * springY.current;
     springVel.current += (springForce - damping * springVel.current) * delta;
     springY.current += springVel.current * delta;
 
-    // Calcular offset ideal local frente a la cámara
-    const localOffset = new Vector3(0.25, -0.26 + springY.current, -0.62);
+    // Calcular offset ideal: bandeja más centrada, baja y cercana a la cámara
+    const localOffset = new Vector3(0.0, -0.28 + springY.current, -0.55);
 
     // Movimiento orgánico al caminar (bobbing) o respiración en reposo
     const t = clock.getElapsedTime();
     if (isMoving) {
-      localOffset.y += Math.sin(t * 10) * 0.018;
-      localOffset.x += Math.cos(t * 5) * 0.012;
-      localOffset.z += Math.sin(t * 8) * 0.008;
+      localOffset.y += Math.sin(t * 10) * 0.016;
+      localOffset.x += Math.cos(t * 5) * 0.010;
+      localOffset.z += Math.sin(t * 8) * 0.007;
     } else {
-      // Respiración sutil
-      localOffset.y += Math.sin(t * 2) * 0.004;
+      localOffset.y += Math.sin(t * 2) * 0.003;
       localOffset.x += Math.cos(t * 1.5) * 0.002;
     }
 
