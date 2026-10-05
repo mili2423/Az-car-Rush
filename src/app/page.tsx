@@ -579,10 +579,8 @@ export default function GamePage() {
           const rec = RECIPES[ovenState.recipeId!];
           if (rec.requiresDecoration) {
             setTray({ type: 'baked', recipeId: ovenState.recipeId! });
-            showToast(`${rec.name} horneado. Llévalo a la mesa de decoración [E]`, 'info');
           } else {
             setTray({ type: 'finished', recipeId: ovenState.recipeId! });
-            showToast(`${rec.name} horneado y listo para entregar al cliente [E]`, 'success');
           }
         }
         setOvenState({

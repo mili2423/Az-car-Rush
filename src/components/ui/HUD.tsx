@@ -225,6 +225,22 @@ export const HUD: React.FC<HUDProps> = ({
   return (
     <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-between p-3 md:p-4">
 
+      {/* Toast corner: solo warning y success, esquina superior derecha */}
+      {toast && toast.type !== 'info' && (
+        <div className="pointer-events-none fixed top-16 right-4 z-50 max-w-xs">
+          <div className="px-4 py-2 rounded-xl text-xs font-bold shadow-lg flex items-center gap-2"
+            style={{
+              background: toast.type === 'success' ? 'rgba(220,252,231,0.98)' : 'rgba(255,251,235,0.98)',
+              border: `1.5px solid ${toast.type === 'success' ? '#86efac' : '#fde047'}`,
+              color: toast.type === 'success' ? '#15803d' : '#a16207',
+              boxShadow: '0 4px 20px rgba(120,80,20,0.15)',
+              backdropFilter: 'blur(8px)',
+            }}>
+            {toast.message}
+          </div>
+        </div>
+      )}
+
       {/* ================================================================ */}
       {/* 1. TOP BAR REAGRUPADA EN 3 BLOQUES LIMPIOS                       */}
       {/* ================================================================ */}
@@ -359,20 +375,6 @@ export const HUD: React.FC<HUDProps> = ({
           </div>
         )}
 
-        {/* Notificación Toast temporal */}
-        {toast && (
-          <div className="max-w-md w-full animate-bounce">
-            <div className="px-4 py-2 rounded-xl text-center text-xs font-bold flex items-center justify-center gap-2"
-              style={{
-                background: toast.type === 'success' ? 'rgba(220,252,231,0.98)' : toast.type === 'warning' ? 'rgba(255,251,235,0.98)' : 'rgba(255,252,245,0.98)',
-                border: `1.5px solid ${toast.type === 'success' ? '#86efac' : toast.type === 'warning' ? '#fde047' : '#d1c4a0'}`,
-                color: toast.type === 'success' ? '#15803d' : toast.type === 'warning' ? '#a16207' : '#44403c',
-                boxShadow: '0 4px 20px rgba(120,80,20,0.15)',
-              }}>
-              {toast.message}
-            </div>
-          </div>
-        )}
 
         {/* Barra de progreso de la batidora */}
         {mixingProgress !== null && (
