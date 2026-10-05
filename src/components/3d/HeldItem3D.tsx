@@ -341,7 +341,7 @@ export const HeldItem3D: React.FC<HeldItem3DProps> = ({ tray, isMoving }) => {
 };
 
 // Sub-component to render the specific 3D pastry model
-const Product3DItem: React.FC<{ productId: ProductId; isFinished: boolean }> = ({
+export const Product3DItem: React.FC<{ productId: ProductId; isFinished: boolean }> = ({
   productId,
   isFinished,
 }) => {

@@ -200,8 +200,21 @@ export type InteractableType =
   | 'mixer'
   | 'oven'
   | 'decorating'
+  | 'dec_pink'
+  | 'dec_blue'
+  | 'dec_yellow'
+  | 'dec_purple'
+  | 'dec_sprinkles'
+  | 'dec_strawberries'
   | 'counter'
   | 'trash';
+
+// Estado de la mesa de decoración
+export interface TableState {
+  productId: ProductId | null;
+  step: number;
+  isIncorrect: boolean;
+}
 
 // Estado interno del horno pastelero
 export interface OvenState {

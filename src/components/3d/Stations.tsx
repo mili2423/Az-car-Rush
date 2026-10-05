@@ -2,18 +2,21 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Group, PointLight } from 'three';
 import { RoundedBox } from '@react-three/drei';
-import { OvenState } from '@/types/game';
+import { OvenState, TableState } from '@/types/game';
+import { Product3DItem } from './HeldItem3D';
 
 interface StationsProps {
   ovenState: OvenState;
   isMixerActive: boolean;
   focusedObject: string | null;
+  tableState: TableState;
 }
 
 export const Stations: React.FC<StationsProps> = ({
   ovenState,
   isMixerActive,
   focusedObject,
+  tableState,
 }) => {
   const mixerPaddleRef = useRef<Group>(null);
   const ovenGlowRef = useRef<PointLight>(null);
@@ -620,17 +623,27 @@ export const Stations: React.FC<StationsProps> = ({
               roughness={0.2}
             />
           </mesh>
+          {tableState.productId && (
+            <group position={[0, 0.14, 0]} scale={[1.5, 1.5, 1.5]}>
+              <Product3DItem 
+                productId={tableState.productId} 
+                isFinished={tableState.step >= (tableState.productId === 'cupcake' || tableState.productId === 'cake' ? 2 : 1) || tableState.isIncorrect} 
+              />
+            </group>
+          )}
         </group>
 
         {/* Mangas pasteleras con forma cónica curvada y boquillas de estrella */}
         {[-1.1, -0.5, 0.6, 1.2].map((pz, idx) => {
           const bagColors = ['#ec4899', '#38bdf8', '#fbbf24', '#a855f7'];
+          const names = ['dec_pink', 'dec_blue', 'dec_yellow', 'dec_purple'];
+          const objName = names[idx];
           return (
-            <group key={`bag-${idx}`} position={[-0.2, 1.18, pz]} rotation={[0.35, 0, 0.25]}>
+            <group key={`bag-${idx}`} position={[-0.2, 1.18, pz]} rotation={[0.35, 0, 0.25]} name={objName}>
               <mesh castShadow scale={[1, 1.2, 1]}>
                 <coneGeometry args={[0.13, 0.42, 16]} />
                 <meshStandardMaterial
-                  color={focusedObject === 'decorating' ? '#fef08a' : bagColors[idx]}
+                  color={focusedObject === objName ? '#fef08a' : bagColors[idx]}
                   roughness={0.4}
                 />
               </mesh>
@@ -644,19 +657,23 @@ export const Stations: React.FC<StationsProps> = ({
         })}
 
         {/* Cuencos esféricos de chispas y confites de colores */}
-        {[-0.8, 0.8].map((bz, bidx) => (
-          <group key={`tbowl-${bidx}`} position={[0.32, 1.12, bz]}>
-            <mesh>
-              <sphereGeometry args={[0.16, 14, 14, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
-              <meshStandardMaterial color="#fdf2f8" roughness={0.2} />
-            </mesh>
-            {/* Sprinkles de colores en el interior */}
-            <mesh position={[0, -0.02, 0]}>
-              <cylinderGeometry args={[0.14, 0.1, 0.05, 14]} />
-              <meshStandardMaterial color={bidx === 0 ? '#ec4899' : '#38bdf8'} roughness={0.5} />
-            </mesh>
-          </group>
-        ))}
+        {[-0.8, 0.8].map((bz, bidx) => {
+          const names = ['dec_sprinkles', 'dec_strawberries'];
+          const objName = names[bidx];
+          return (
+            <group key={`tbowl-${bidx}`} position={[0.32, 1.12, bz]} name={objName}>
+              <mesh>
+                <sphereGeometry args={[0.16, 14, 14, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
+                <meshStandardMaterial color={focusedObject === objName ? '#fef08a' : '#fdf2f8'} roughness={0.2} />
+              </mesh>
+              {/* Sprinkles de colores en el interior */}
+              <mesh position={[0, -0.02, 0]}>
+                <cylinderGeometry args={[0.14, 0.1, 0.05, 14]} />
+                <meshStandardMaterial color={bidx === 0 ? '#ec4899' : '#38bdf8'} roughness={0.5} />
+              </mesh>
+            </group>
+          );
+        })}
       </group>
 
       {/* ============================================================== */}

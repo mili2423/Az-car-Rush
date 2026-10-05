@@ -14,6 +14,7 @@ import {
   ProductId,
   RECIPES,
   TrayState,
+  TableState,
 } from '@/types/game';
 import { LEVELS } from '@/utils/levels';
 import { loadGameProgress, saveGameProgress } from '@/utils/storage';
@@ -30,7 +31,7 @@ import { HowToPlayModal } from '@/components/ui/HowToPlayModal';
 import { CreditsModal } from '@/components/ui/CreditsModal';
 import { ShopModal } from '@/components/ui/ShopModal';
 import { MixerMinigame } from '@/components/ui/MixerMinigame';
-import { DecorationMenu } from '@/components/ui/DecorationMenu';
+
 import { LevelSummaryModal } from '@/components/ui/LevelSummaryModal';
 import { GameWinModal } from '@/components/ui/GameWinModal';
 import { MiniTutorialModal } from '@/components/ui/MiniTutorialModal';
@@ -59,7 +60,11 @@ export default function GamePage() {
   const [showCredits, setShowCredits] = useState<boolean>(false);
   const [showShop, setShowShop] = useState<boolean>(false);
   const [isMixerActive, setIsMixerActive] = useState<boolean>(false);
-  const [decoratingRecipe, setDecoratingRecipe] = useState<ProductId | null>(null);
+  const [tableState, setTableState] = useState<TableState>({
+    productId: null,
+    step: 0,
+    isIncorrect: false,
+  });
 
   // --------------------------------------------------------------------------
   // 2. ESTADO DEL NIVEL ACTIVO (DÍA EN CURSO)
@@ -611,22 +616,76 @@ export default function GamePage() {
       return;
     }
 
-    // D. Mesa de Decoración
+    // D. Mesa de Decoración y Elementos
+    const CORRECT_DECORATION: Record<ProductId, string[]> = {
+      cookie: [],
+      pastry: [],
+      cupcake: ['dec_pink', 'dec_sprinkles'],
+      donut: ['dec_pink'],
+      tart: ['dec_strawberries'],
+      cake: ['dec_purple', 'dec_yellow'],
+    };
+
     if (focusedObject === 'decorating') {
       if (tray.type === 'baked') {
         const rec = RECIPES[tray.recipeId];
         if (rec.requiresDecoration) {
           sounds.playPickup();
-          // Abre el minijuego de decoración
-          setDecoratingRecipe(tray.recipeId);
-          document.exitPointerLock?.();
+          // Colocar en la mesa
+          setTableState({ productId: tray.recipeId, step: 0, isIncorrect: false });
+          setTray({ type: 'empty' });
+          showToast(`Colocaste ${rec.name} en la mesa. ¡Añade los ingredientes correctos!`, 'info');
         } else {
           showToast(`${rec.name} no requiere decoración. ¡Entrégalo al cliente!`, 'info');
+        }
+      } else if (tray.type === 'empty' && tableState.productId) {
+        const reqSteps = CORRECT_DECORATION[tableState.productId].length;
+        if (tableState.step >= reqSteps || tableState.isIncorrect) {
+          // Recoger postre terminado (correcta o incorrectamente decorado)
+          sounds.playPickup();
+          setTray({ type: 'finished', recipeId: tableState.productId });
+          setTableState({ productId: null, step: 0, isIncorrect: false });
+          if (tableState.isIncorrect) {
+            setScore(s => Math.max(0, s - 80));
+            showToast('Decoración incorrecta. El cliente lo notará (-80 pts)', 'warning');
+          } else {
+            showToast(`¡Decoración completa! Listo para entregar.`, 'success');
+          }
+        } else {
+          showToast(`Aún le falta decoración. Usa las mangas o cuencos.`, 'info');
         }
       } else if (tray.type === 'finished') {
         showToast('Ya está decorado. Llévalo al mostrador para entregarlo al cliente [E].', 'info');
       } else {
         showToast('Trae un postre horneado que requiera decoración (cupcake, donut, tarta, torta).', 'info');
+      }
+      return;
+    }
+
+    if (focusedObject && focusedObject.startsWith('dec_')) {
+      if (!tableState.productId) {
+        showToast('Coloca un postre en la mesa de decoración primero.', 'info');
+        return;
+      }
+      const reqSteps = CORRECT_DECORATION[tableState.productId];
+      if (tableState.isIncorrect || tableState.step >= reqSteps.length) {
+        showToast('El postre ya está terminado, recógelo de la mesa.', 'info');
+        return;
+      }
+      
+      const expectedDecoration = reqSteps[tableState.step];
+      if (focusedObject === expectedDecoration) {
+        sounds.playPickup(); // Idealmente un sonido de glaseado
+        setTableState(prev => ({ ...prev, step: prev.step + 1 }));
+        if (tableState.step + 1 >= reqSteps.length) {
+          showToast('¡Decoración correcta y terminada! Recógelo de la mesa [E].', 'success');
+        } else {
+          showToast(`¡Paso ${tableState.step + 1} correcto! Sigue decorando...`, 'info');
+        }
+      } else {
+        sounds.playError();
+        setTableState(prev => ({ ...prev, isIncorrect: true }));
+        showToast('Te equivocaste de decoración... El postre quedó arruinado.', 'warning');
       }
       return;
     }
@@ -815,34 +874,7 @@ export default function GamePage() {
             difficultyLabel={currentLevelDef.difficultyLabel}
           />
 
-          {decoratingRecipe && (
-            <DecorationMenu
-              recipeId={decoratingRecipe}
-              onDecorate={(isCorrect: boolean) => {
-                if (isCorrect) {
-                  setTray({ type: 'finished', recipeId: decoratingRecipe });
-                } else {
-                  // Decoración incorrecta: se marca como finished pero con penalización en score
-                  setTray({ type: 'finished', recipeId: decoratingRecipe });
-                  setScore(s => Math.max(0, s - 80));
-                  showToast('Decoración incorrecta. El cliente lo notará (-80 pts)', 'warning');
-                }
-                setDecoratingRecipe(null);
-                // Volver a bloquear el puntero
-                setTimeout(() => {
-                  const canvas = document.querySelector('canvas');
-                  canvas?.requestPointerLock?.();
-                }, 100);
-              }}
-              onCancel={() => {
-                setDecoratingRecipe(null);
-                setTimeout(() => {
-                  const canvas = document.querySelector('canvas');
-                  canvas?.requestPointerLock?.();
-                }, 100);
-              }}
-            />
-          )}
+
         </div>
       )}
 

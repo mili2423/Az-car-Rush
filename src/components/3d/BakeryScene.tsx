@@ -7,7 +7,7 @@ import { Stations } from './Stations';
 import { Customer3D } from './Customer3D';
 import { PlayerController } from './PlayerController';
 import { HeldItem3D } from './HeldItem3D';
-import { CustomerOrder, OvenState, TrayState } from '@/types/game';
+import { CustomerOrder, OvenState, TrayState, TableState } from '@/types/game';
 
 interface BakerySceneProps {
   ovenState: OvenState;
@@ -16,6 +16,7 @@ interface BakerySceneProps {
   focusedObject: string | null;
   walkSpeedBonus: number;
   tray: TrayState;
+  tableState: TableState;
   onFocusChange: (objectName: string | null) => void;
   onInteract: () => void;
   isLocked: boolean;
@@ -29,6 +30,7 @@ export const BakeryScene: React.FC<BakerySceneProps> = ({
   focusedObject,
   walkSpeedBonus,
   tray,
+  tableState,
   onFocusChange,
   onInteract,
   isLocked,
@@ -49,6 +51,7 @@ export const BakeryScene: React.FC<BakerySceneProps> = ({
             ovenState={ovenState}
             isMixerActive={isMixerActive}
             focusedObject={focusedObject}
+            tableState={tableState}
           />
           <Customer3D currentOrder={currentOrder} />
           
