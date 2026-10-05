@@ -192,244 +192,277 @@ export const HUD: React.FC<HUDProps> = ({
     }
   };
 
+  // Control de visibilidad del cartel de tutorial (aparece con cada nuevo paso y se desvanece suavemente)
+  const [visibleTutorial, setVisibleTutorial] = useState<string | null>(tutorialTip || null);
+  const [tutorialOpacity, setTutorialOpacity] = useState<number>(1);
+  const lastTipRef = React.useRef<string | undefined>(tutorialTip);
+
+  React.useEffect(() => {
+    if (tutorialTip && tutorialTip !== lastTipRef.current) {
+      lastTipRef.current = tutorialTip;
+      setVisibleTutorial(tutorialTip);
+      setTutorialOpacity(1);
+
+      // Desvanecer suavemente después de 5 segundos
+      const fadeTimer = setTimeout(() => {
+        setTutorialOpacity(0);
+      }, 5000);
+
+      const hideTimer = setTimeout(() => {
+        setVisibleTutorial(null);
+      }, 5600);
+
+      return () => {
+        clearTimeout(fadeTimer);
+        clearTimeout(hideTimer);
+      };
+    } else if (!tutorialTip) {
+      setVisibleTutorial(null);
+      lastTipRef.current = undefined;
+    }
+  }, [tutorialTip]);
+
   return (
     <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-between p-3 md:p-4">
 
       {/* ================================================================ */}
-      {/* TOP BAR                                                           */}
+      {/* 1. TOP BAR REAGRUPADA EN 3 BLOQUES LIMPIOS                       */}
       {/* ================================================================ */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 w-full">
 
-        {/* Izquierda */}
-        <div className="flex items-center gap-2">
-          {/* Dinero */}
-          <div className="flex items-center gap-2 px-3 py-2" style={panelStyle}>
-            <div className="w-7 h-7 rounded-xl flex items-center justify-center font-black text-sm text-white"
+        {/* --- BLOQUE IZQUIERDO: Progreso del Día y Ganancias --- */}
+        <div className="flex items-center" style={panelStyle}>
+          <div className="flex items-center gap-2.5 px-3 py-1.5">
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center font-black text-sm text-white shadow-sm shrink-0"
               style={{ background: 'linear-gradient(135deg, #d97706, #ea580c)' }}>$</div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-semibold text-stone-400 uppercase leading-none">Ganado</span>
-              <span className="text-sm font-black text-stone-800 leading-tight">
-                ${money.toLocaleString()} <span className="text-[10px] font-medium text-stone-400">/ ${targetMoney.toLocaleString()}</span>
+            <div className="flex flex-col min-w-[115px]">
+              <div className="flex justify-between items-baseline">
+                <span className="text-[10px] font-bold text-stone-400 uppercase leading-none">Ganado</span>
+                <span className="text-[10px] font-bold text-amber-700">
+                  {Math.min(100, Math.round((money / targetMoney) * 100))}%
+                </span>
+              </div>
+              <span className="text-xs font-black text-stone-800 leading-tight">
+                ${money.toLocaleString()} <span className="text-[10px] font-semibold text-stone-400">/ ${targetMoney.toLocaleString()}</span>
               </span>
+              {/* Mini barra de progreso discreta integrada directamente en la tarjeta de Ganado */}
+              <div className="w-full h-1.5 rounded-full overflow-hidden bg-stone-200 mt-1">
+                <div className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min(100, (money / targetMoney) * 100)}%`,
+                    background: money >= targetMoney ? '#16a34a' : 'linear-gradient(90deg, #d97706, #ea580c)'
+                  }} />
+              </div>
             </div>
           </div>
 
+          <div className="h-7 w-[1px] bg-stone-200/80" />
+
           {/* Nivel + Dificultad */}
-          <div className="hidden sm:flex flex-col px-3 py-2" style={panelStyle}>
-            <div className="flex items-center gap-2">
+          <div className="hidden sm:flex flex-col px-3 py-1.5">
+            <div className="flex items-center gap-1.5">
               <span className="text-[10px] font-black uppercase tracking-wider text-amber-700">Día {levelNumber}</span>
               {diffStyle && (
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full"
                   style={{ background: diffStyle.bg, color: diffStyle.text, border: `1px solid ${diffStyle.border}` }}>
                   {difficultyLabel}
                 </span>
               )}
             </div>
-            <span className="text-xs font-bold text-stone-700">{levelTitle}</span>
-          </div>
-
-          {/* Acciones */}
-          <div className="pointer-events-auto flex gap-1.5">
-            <button onClick={() => setShowRecipesModal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-800 transition-all active:scale-95 hover:bg-amber-100 rounded-xl"
-              style={panelStyle}>
-              <BookOpen className="w-3.5 h-3.5 text-amber-600" />
-              <span>Recetas</span>
-            </button>
-            {onOpenTutorial && (
-              <button onClick={onOpenTutorial}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-orange-800 transition-all active:scale-95 hover:bg-orange-100 rounded-xl"
-                style={{ ...panelStyle, border: '1.5px solid rgba(251,146,60,0.35)' }}>
-                <Sparkles className="w-3.5 h-3.5 text-orange-500" />
-                <span>Tutorial</span>
-              </button>
-            )}
+            <span className="text-xs font-bold text-stone-700 truncate max-w-[110px]">{levelTitle}</span>
           </div>
         </div>
 
-        {/* Centro: Reloj + Puntaje */}
-        <div className="flex items-center gap-2">
-          <div className={`flex items-center gap-2 px-4 py-2 ${timeLeftSeconds <= 30 ? 'animate-pulse' : ''}`}
-            style={{
-              ...panelStyle,
-              background: timeLeftSeconds <= 30 ? 'rgba(254,226,226,0.97)' : 'rgba(255,252,245,0.97)',
-              border: timeLeftSeconds <= 30 ? '1.5px solid rgba(239,68,68,0.4)' : '1.5px solid rgba(180,140,80,0.25)',
-            }}>
-            <Clock className="w-5 h-5" style={{ color: timeLeftSeconds <= 30 ? '#ef4444' : '#d97706' }} />
-            <span className="text-lg font-black tracking-tight" style={{ color: timeLeftSeconds <= 30 ? '#ef4444' : '#292524' }}>
+        {/* --- BLOQUE CENTRO: Reloj y Puntaje --- */}
+        <div className="flex items-center" style={panelStyle}>
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 ${timeLeftSeconds <= 30 ? 'animate-pulse' : ''}`}>
+            <Clock className="w-4 h-4 shrink-0" style={{ color: timeLeftSeconds <= 30 ? '#ef4444' : '#d97706' }} />
+            <span className="text-sm font-black tracking-tight" style={{ color: timeLeftSeconds <= 30 ? '#ef4444' : '#292524' }}>
               {formattedTime}
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 px-3 py-2" style={panelStyle}>
-            <Award className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-black text-stone-800">{score.toLocaleString()} pts</span>
+          <div className="h-6 w-[1px] bg-stone-200/80" />
+
+          <div className="flex items-center gap-1.5 px-3 py-1.5">
+            <Award className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span className="text-xs font-black text-stone-800 whitespace-nowrap">
+              {score.toLocaleString()} <span className="text-[10px] font-semibold text-stone-400">pts</span>
+            </span>
           </div>
         </div>
 
-        {/* Derecha */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 px-3 py-2" style={panelStyle}>
+        {/* --- BLOQUE DERECHO: Vidas y Controles --- */}
+        <div className="flex items-center" style={panelStyle}>
+          {/* Corazones / Vidas */}
+          <div className="flex items-center gap-1 px-2.5 py-1.5">
             {Array.from({ length: maxLives }).map((_, idx) => (
-              <Heart key={`heart-${idx}`} className="w-5 h-5 transition-all duration-200"
+              <Heart key={`heart-${idx}`} className="w-3.5 h-3.5 transition-all duration-200"
                 style={{ fill: idx < lives ? '#ef4444' : '#e5e7eb', color: idx < lives ? '#ef4444' : '#d1d5db', transform: idx < lives ? 'scale(1)' : 'scale(0.85)' }} />
             ))}
           </div>
 
-          <div className="pointer-events-auto flex gap-1.5">
-            <button onClick={onToggleMute}
-              className="flex h-9 w-9 items-center justify-center transition-all active:scale-95"
-              style={panelStyle} title={isMuted ? 'Activar Sonido' : 'Silenciar'}>
-              {isMuted ? <VolumeX className="w-4 h-4 text-stone-400" /> : <Volume2 className="w-4 h-4 text-amber-600" />}
+          <div className="h-7 w-[1px] bg-stone-200/80" />
+
+          {/* Botones de acción compactos */}
+          <div className="pointer-events-auto flex items-center gap-1 px-1.5 py-1">
+            <button onClick={() => setShowRecipesModal(true)}
+              className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-amber-800 hover:bg-amber-100/70 rounded-lg transition-all active:scale-95"
+              title="Libro de Recetas">
+              <BookOpen className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span className="hidden md:inline">Recetas</span>
             </button>
+
+            {onOpenTutorial && (
+              <button onClick={onOpenTutorial}
+                className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-orange-800 hover:bg-orange-100/70 rounded-lg transition-all active:scale-95"
+                title="Repasar Tutorial">
+                <Sparkles className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                <span className="hidden lg:inline">Ayuda</span>
+              </button>
+            )}
+
+            <button onClick={onToggleMute}
+              className="flex h-7 w-7 items-center justify-center text-stone-600 hover:bg-stone-100 rounded-lg transition-all active:scale-95 shrink-0"
+              title={isMuted ? 'Activar Sonido' : 'Silenciar'}>
+              {isMuted ? <VolumeX className="w-3.5 h-3.5 text-stone-400" /> : <Volume2 className="w-3.5 h-3.5 text-amber-600" />}
+            </button>
+
             <button onClick={onPause}
-              className="flex h-9 px-3 items-center justify-center text-[11px] font-bold text-stone-600 transition-all active:scale-95"
-              style={panelStyle}>
-              PAUSA [ESC]
+              className="flex h-7 px-2 items-center justify-center text-[10px] font-bold text-stone-600 hover:bg-stone-100 rounded-lg transition-all active:scale-95"
+              title="Pausar juego">
+              PAUSA
             </button>
           </div>
         </div>
       </div>
 
-      {/* Barra de meta de dinero */}
-      <div className="self-center w-full max-w-sm">
-        <div className="flex justify-between text-[10px] font-semibold mb-1 text-stone-500">
-          <span>Meta del día</span>
-          <span style={{ color: money >= targetMoney ? '#16a34a' : '#78716c' }}>
-            {Math.min(100, Math.round((money / targetMoney) * 100))}%
-          </span>
-        </div>
-        <div className="w-full h-2 rounded-full overflow-hidden bg-stone-200">
-          <div className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${Math.min(100, (money / targetMoney) * 100)}%`, background: money >= targetMoney ? '#16a34a' : 'linear-gradient(90deg, #d97706, #ea580c)' }} />
-        </div>
-      </div>
+      {/* ================================================================ */}
+      {/* 2. ZONA CENTRAL DESPEJADA: Solo avisos efímeros no invasivos      */}
+      {/* ================================================================ */}
+      <div className="flex flex-col items-center gap-2 pointer-events-none">
+        {/* Pastilla no invasiva del tutorial: se ubica arriba y se desvanece sola */}
+        {visibleTutorial && !toast && (
+          <div
+            className="transition-opacity duration-500 max-w-md px-4 py-1.5 rounded-full text-center flex items-center gap-2 shadow-md"
+            style={{
+              opacity: tutorialOpacity,
+              background: 'rgba(255, 251, 235, 0.96)',
+              border: '1px solid #fde047',
+              backdropFilter: 'blur(6px)',
+            }}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <div className="text-xs font-bold text-stone-800 truncate">
+              {visibleTutorial}
+            </div>
+          </div>
+        )}
 
-      {/* Batidora */}
-      {mixingProgress !== null && (
-        <div className="self-center flex flex-col items-center">
-          <div className="flex flex-col items-center px-7 py-4 rounded-2xl min-w-[280px]"
-            style={{ background: 'rgba(255,252,245,0.98)', border: '2px solid rgba(180,140,80,0.35)', boxShadow: '0 8px 32px rgba(120,80,20,0.18)' }}>
-            <UtensilsCrossed className="w-7 h-7 mb-1 animate-spin text-amber-600" />
-            <div className="text-sm font-black text-stone-800 mb-2">Batiendo en la Batidora</div>
-            <div className="w-full h-3 rounded-full overflow-hidden bg-stone-200">
+        {/* Notificación Toast temporal */}
+        {toast && (
+          <div className="max-w-md w-full animate-bounce">
+            <div className="px-4 py-2 rounded-xl text-center text-xs font-bold flex items-center justify-center gap-2"
+              style={{
+                background: toast.type === 'success' ? 'rgba(220,252,231,0.98)' : toast.type === 'warning' ? 'rgba(255,251,235,0.98)' : 'rgba(255,252,245,0.98)',
+                border: `1.5px solid ${toast.type === 'success' ? '#86efac' : toast.type === 'warning' ? '#fde047' : '#d1c4a0'}`,
+                color: toast.type === 'success' ? '#15803d' : toast.type === 'warning' ? '#a16207' : '#44403c',
+                boxShadow: '0 4px 20px rgba(120,80,20,0.15)',
+              }}>
+              {toast.message}
+            </div>
+          </div>
+        )}
+
+        {/* Barra de progreso de la batidora */}
+        {mixingProgress !== null && (
+          <div className="flex flex-col items-center px-5 py-3 rounded-2xl min-w-[240px]"
+            style={{ ...panelStyle, boxShadow: '0 8px 32px rgba(120,80,20,0.18)' }}>
+            <UtensilsCrossed className="w-5 h-5 mb-1 animate-spin text-amber-600" />
+            <div className="text-xs font-black text-stone-800 mb-1.5">Batiendo Masa...</div>
+            <div className="w-full h-2 rounded-full overflow-hidden bg-stone-200">
               <div className="h-full rounded-full transition-all duration-100"
                 style={{ width: `${mixingProgress}%`, background: 'linear-gradient(90deg, #d97706, #ea580c)' }} />
             </div>
-            <div className="text-xs font-bold mt-1.5 text-amber-700">
-              {mixingProgress < 100 ? `Mezclando... ${mixingProgress}%` : 'Masa Lista'}
-            </div>
           </div>
-        </div>
-      )}
-
-      {/* Toast */}
-      {toast && (
-        <div className="self-center max-w-md w-full">
-          <div className="px-5 py-3 rounded-2xl text-center text-xs md:text-sm font-bold flex items-center justify-center gap-2"
-            style={{
-              background: toast.type === 'success' ? 'rgba(220,252,231,0.98)' : toast.type === 'warning' ? 'rgba(255,251,235,0.98)' : 'rgba(255,252,245,0.98)',
-              border: `1.5px solid ${toast.type === 'success' ? '#86efac' : toast.type === 'warning' ? '#fde047' : '#d1c4a0'}`,
-              color: toast.type === 'success' ? '#15803d' : toast.type === 'warning' ? '#a16207' : '#44403c',
-              boxShadow: '0 4px 20px rgba(120,80,20,0.15)',
-            }}>
-            {toast.message}
-          </div>
-        </div>
-      )}
-
-      {/* Tutorial tip */}
-      {!toast && tutorialTip && (
-        <div className="self-center max-w-lg px-5 py-2.5 rounded-2xl text-center"
-          style={{ background: 'rgba(255,251,235,0.98)', border: '1.5px solid #fde047', boxShadow: '0 4px 16px rgba(120,80,20,0.12)' }}>
-          <div className="text-[10px] font-bold uppercase tracking-wide text-amber-700 mb-0.5">Instrucción del Día:</div>
-          <div className="text-sm font-semibold text-stone-800">{tutorialTip}</div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* ================================================================ */}
-      {/* BOTTOM: Pedido + Bandeja                                          */}
+      {/* 3. BOTTOM CARDS UNIFICADAS Y COMPACTAS                          */}
       {/* ================================================================ */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3 w-full">
 
-        {/* Pedido del cliente */}
+        {/* Tarjeta A: Pedido del cliente actual */}
         {currentOrder ? (
-          <div className="pointer-events-auto max-w-sm w-full p-4 rounded-2xl"
-            style={{ background: 'rgba(255,252,245,0.98)', border: '1.5px solid rgba(180,140,80,0.3)', boxShadow: '0 4px 24px rgba(120,80,20,0.18)' }}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full ring-2 ring-white shadow-sm"
+          <div className="pointer-events-auto max-w-sm w-full p-3 rounded-2xl" style={panelStyle}>
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3.5 h-3.5 rounded-full ring-2 ring-white shadow-sm shrink-0"
                   style={{ backgroundColor: currentOrder.avatarColor }} />
-                <span className="font-black text-sm text-stone-800">{currentOrder.customerName}</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200 uppercase">
+                <span className="font-black text-xs text-stone-800">{currentOrder.customerName}</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-stone-100 text-stone-600 border border-stone-200 uppercase">
                   {currentOrder.customerType}
                 </span>
               </div>
-              <span className="text-xs font-black text-amber-700">+${currentOrder.totalPrice}</span>
+              <span className="text-xs font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">
+                +${currentOrder.totalPrice}
+              </span>
             </div>
 
-            {/* Barra de paciencia */}
-            <div className="w-full h-2 rounded-full overflow-hidden bg-stone-200 mb-3">
+            {/* Barra de paciencia delgada */}
+            <div className="w-full h-1.5 rounded-full overflow-hidden bg-stone-200 mb-2">
               <div className="h-full transition-all duration-300 rounded-full"
                 style={{ width: `${Math.max(4, patienceRatio * 100)}%`, backgroundColor: getPatienceColor(patienceRatio) }} />
             </div>
 
-            <div className="space-y-1.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Pedido:</div>
+            {/* Lista compacta de ítems */}
+            <div className="space-y-1">
               {currentOrder.items.map((prodId, idx) => {
                 const recipe = RECIPES[prodId];
                 const isDelivered = currentOrder.deliveredItems.includes(prodId);
                 return (
                   <div key={`ord-${idx}`}
-                    className="flex items-center justify-between p-2 rounded-xl"
+                    className="flex items-center justify-between px-2 py-1 rounded-lg text-xs"
                     style={{
-                      background: isDelivered ? '#f0fdf4' : '#fdf6ec',
-                      border: `1px solid ${isDelivered ? '#86efac' : '#e8d5b0'}`,
+                      background: isDelivered ? '#f0fdf4' : '#fefdfa',
+                      border: `1px solid ${isDelivered ? '#86efac' : 'rgba(180,140,80,0.18)'}`,
                       opacity: isDelivered ? 0.6 : 1,
                     }}>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold bg-amber-100 text-amber-800">
-                        {recipe.name[0]}
-                      </div>
-                      <div>
-                        <div className="text-xs font-black text-stone-800" style={{ textDecoration: isDelivered ? 'line-through' : 'none' }}>
-                          {recipe.name}
-                        </div>
-                        <div className="text-[10px] font-semibold text-amber-700">
-                          {recipe.ingredients.map(i => INGREDIENTS[i].name).join(' + ')}
-                        </div>
-                      </div>
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="text-sm">{recipe.emoji}</span>
+                      <span className="font-bold text-stone-800 truncate" style={{ textDecoration: isDelivered ? 'line-through' : 'none' }}>
+                        {recipe.name}
+                      </span>
                     </div>
-                    <span className="text-xs font-black text-amber-700">${recipe.price}</span>
+                    <span className="text-[11px] font-black text-amber-800 shrink-0 ml-2">${recipe.price}</span>
                   </div>
                 );
               })}
             </div>
           </div>
         ) : (
-          <div className="px-4 py-2 rounded-2xl text-xs font-semibold text-stone-500"
-            style={panelStyle}>
+          <div className="px-3 py-2 rounded-xl text-xs font-semibold text-stone-500" style={panelStyle}>
             Esperando próximo cliente...
           </div>
         )}
 
-        {/* Bandeja */}
-        <div className="pointer-events-auto min-w-[280px] max-w-md w-full p-4 rounded-2xl"
-          style={{ background: 'rgba(255,252,245,0.98)', border: '1.5px solid rgba(180,140,80,0.3)', boxShadow: '0 4px 24px rgba(120,80,20,0.18)' }}>
-          <div className="flex items-center justify-between mb-2">
+        {/* Tarjeta B: En tus Manos (Mismo sistema visual y proporción) */}
+        <div className="pointer-events-auto min-w-[260px] max-w-sm w-full p-3 rounded-2xl" style={panelStyle}>
+          <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-black uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
-              <Package className="w-4 h-4 text-amber-600" />
+              <Package className="w-3.5 h-3.5 text-amber-600" />
               En tus Manos
             </span>
             {tray.type !== 'empty' && (
               <button onClick={onClearTray}
-                className="flex items-center gap-1 text-[11px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded-lg transition-colors border border-red-200">
+                className="flex items-center gap-1 text-[10px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded-lg transition-colors border border-red-200">
                 <Trash2 className="w-3 h-3" />
                 <span>Vaciar</span>
               </button>
             )}
           </div>
-          <div className="min-h-[48px] flex items-center">
+          <div className="min-h-[40px] flex items-center">
             {renderTrayContent()}
           </div>
         </div>

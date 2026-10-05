@@ -137,6 +137,90 @@ export const BakeryRoom: React.FC = () => {
       </group>
 
       {/* ============================================================== */}
+      {/* MOBILIARIO DECORATIVO: BANCOS CON RESPALDO CURVO Y ALMOHADÓN   */}
+      {/* ============================================================== */}
+      {/* Banco 1: Cerca de la entrada izquierda */}
+      <group position={[-3.0, 0, 5.8]} rotation={[0, -Math.PI / 6, 0]}>
+        <mesh position={[0, 0.45, 0]} castShadow>
+          <cylinderGeometry args={[0.38, 0.42, 0.1, 18]} />
+          <meshStandardMaterial color="#f472b6" roughness={0.4} />
+        </mesh>
+        {/* Almohadón acolchado esférico */}
+        <mesh position={[0, 0.51, 0]}>
+          <sphereGeometry args={[0.37, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshStandardMaterial color="#fbcfe8" roughness={0.3} />
+        </mesh>
+        {/* Respaldo curvado en arco de medialuna */}
+        <mesh position={[0, 0.85, 0.3]}>
+          <torusGeometry args={[0.34, 0.04, 8, 18, Math.PI]} />
+          <meshStandardMaterial color="#78350f" roughness={0.5} />
+        </mesh>
+        {[-0.2, 0, 0.2].map((bx, bidx) => (
+          <mesh key={`bar-${bidx}`} position={[bx, 0.7, 0.3]}>
+            <cylinderGeometry args={[0.02, 0.02, 0.35, 8]} />
+            <meshStandardMaterial color="#78350f" roughness={0.5} />
+          </mesh>
+        ))}
+        {/* Patas curvas torneadas con regatones dorados */}
+        {[
+          [-0.22, -0.22],
+          [-0.22, 0.22],
+          [0.22, -0.22],
+          [0.22, 0.22],
+        ].map(([px, pz], pidx) => (
+          <group key={`b-leg-${pidx}`} position={[px, 0.22, pz]}>
+            <mesh rotation={[px * 0.3, 0, -pz * 0.3]}>
+              <cylinderGeometry args={[0.035, 0.025, 0.44, 8]} />
+              <meshStandardMaterial color="#78350f" roughness={0.6} />
+            </mesh>
+            <mesh position={[0, -0.22, 0]}>
+              <sphereGeometry args={[0.03, 8, 8]} />
+              <meshStandardMaterial color="#fbbf24" metalness={0.8} />
+            </mesh>
+          </group>
+        ))}
+      </group>
+
+      {/* Banco 2: Cerca de la entrada derecha */}
+      <group position={[3.0, 0, 5.8]} rotation={[0, Math.PI / 6, 0]}>
+        <mesh position={[0, 0.45, 0]} castShadow>
+          <cylinderGeometry args={[0.38, 0.42, 0.1, 18]} />
+          <meshStandardMaterial color="#f472b6" roughness={0.4} />
+        </mesh>
+        <mesh position={[0, 0.51, 0]}>
+          <sphereGeometry args={[0.37, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshStandardMaterial color="#fbcfe8" roughness={0.3} />
+        </mesh>
+        <mesh position={[0, 0.85, 0.3]}>
+          <torusGeometry args={[0.34, 0.04, 8, 18, Math.PI]} />
+          <meshStandardMaterial color="#78350f" roughness={0.5} />
+        </mesh>
+        {[-0.2, 0, 0.2].map((bx, bidx) => (
+          <mesh key={`bar2-${bidx}`} position={[bx, 0.7, 0.3]}>
+            <cylinderGeometry args={[0.02, 0.02, 0.35, 8]} />
+            <meshStandardMaterial color="#78350f" roughness={0.5} />
+          </mesh>
+        ))}
+        {[
+          [-0.22, -0.22],
+          [-0.22, 0.22],
+          [0.22, -0.22],
+          [0.22, 0.22],
+        ].map(([px, pz], pidx) => (
+          <group key={`b-leg2-${pidx}`} position={[px, 0.22, pz]}>
+            <mesh rotation={[px * 0.3, 0, -pz * 0.3]}>
+              <cylinderGeometry args={[0.035, 0.025, 0.44, 8]} />
+              <meshStandardMaterial color="#78350f" roughness={0.6} />
+            </mesh>
+            <mesh position={[0, -0.22, 0]}>
+              <sphereGeometry args={[0.03, 8, 8]} />
+              <meshStandardMaterial color="#fbbf24" metalness={0.8} />
+            </mesh>
+          </group>
+        ))}
+      </group>
+
+      {/* ============================================================== */}
       {/* 3-POINT TOON LIGHTING (Key, Fill & Golden Rim Light)           */}
       {/* ============================================================== */}
       {/* 1. Ambient Warm Glow */}
