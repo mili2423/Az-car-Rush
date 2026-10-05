@@ -43,8 +43,9 @@ export interface Recipe {
   requiresBaking: boolean;    // Si necesita pasar por el horno
   bakeTimeSeconds: number;    // Segundos que tarda en hornearse
   requiresDecoration: boolean;// Si necesita pasar por la mesa de decoración
-  decorationName?: string;    // Nombre del glaseado/topping
+  decorationName?: string;    // Nombre del glaseado/topping (legacy/para UI)
   decorationColor?: string;
+  decorationSteps?: string[]; // Lista de nombres de decoración requeridos
 }
 
 // Libro oficial de recetas
@@ -70,6 +71,7 @@ export const RECIPES: Record<ProductId, Recipe> = {
     requiresDecoration: true,
     decorationName: 'Glaseado y Chispas',
     decorationColor: '#ec4899',
+    decorationSteps: ['Glaseado Rosa', 'Chispas de Colores'],
   },
   donut: {
     id: 'donut',
@@ -82,6 +84,7 @@ export const RECIPES: Record<ProductId, Recipe> = {
     requiresDecoration: true,
     decorationName: 'Glaseado Rosa Pastel',
     decorationColor: '#f472b6',
+    decorationSteps: ['Glaseado Rosa'],
   },
   tart: {
     id: 'tart',
@@ -94,6 +97,7 @@ export const RECIPES: Record<ProductId, Recipe> = {
     requiresDecoration: true,
     decorationName: 'Frutillas y Crema',
     decorationColor: '#fb7185',
+    decorationSteps: ['Crema Chantilly', 'Frutillas Frescas'],
   },
   cake: {
     id: 'cake',
@@ -106,6 +110,7 @@ export const RECIPES: Record<ProductId, Recipe> = {
     requiresDecoration: true,
     decorationName: 'Decoración de Fiesta',
     decorationColor: '#a855f7',
+    decorationSteps: ['Glaseado Violeta', 'Velitas de Fiesta'],
   },
   pastry: {
     id: 'pastry',

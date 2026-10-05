@@ -312,7 +312,7 @@ export const HeldItem3D: React.FC<HeldItem3DProps> = ({ tray, isMoving }) => {
         {(tray.type === 'baked' || tray.type === 'finished') && (
           <Product3DItem
             productId={tray.recipeId}
-            isFinished={tray.type === 'finished'}
+            stepIndex={tray.type === 'finished' ? 99 : 0}
           />
         )}
 
@@ -341,9 +341,9 @@ export const HeldItem3D: React.FC<HeldItem3DProps> = ({ tray, isMoving }) => {
 };
 
 // Sub-component to render the specific 3D pastry model
-export const Product3DItem: React.FC<{ productId: ProductId; isFinished: boolean }> = ({
+export const Product3DItem: React.FC<{ productId: ProductId; stepIndex: number }> = ({
   productId,
-  isFinished,
+  stepIndex,
 }) => {
   switch (productId) {
     case 'cookie':
@@ -382,19 +382,19 @@ export const Product3DItem: React.FC<{ productId: ProductId; isFinished: boolean
             <sphereGeometry args={[0.095, 12, 10]} />
             <meshStandardMaterial color="#78350f" roughness={0.6} />
           </mesh>
-          {/* If decorated: Luscious Pink Swirl Frosting + Cherry */}
-          {isFinished && (
-            <group position={[0, 0.11, 0]}>
-              <mesh castShadow>
-                <coneGeometry args={[0.08, 0.1, 10]} />
-                <meshStandardMaterial color="#ec4899" roughness={0.3} />
-              </mesh>
-              {/* Cherry on top */}
-              <mesh position={[0, 0.07, 0]}>
-                <sphereGeometry args={[0.025, 8, 8]} />
-                <meshStandardMaterial color="#e11d48" roughness={0.2} />
-              </mesh>
-            </group>
+          {/* If decorated step 1: Luscious Pink Swirl Frosting */}
+          {stepIndex >= 1 && (
+            <mesh position={[0, 0.11, 0]} castShadow>
+              <coneGeometry args={[0.08, 0.1, 10]} />
+              <meshStandardMaterial color="#ec4899" roughness={0.3} />
+            </mesh>
+          )}
+          {/* Step 2: Cherry on top (Sprinkles representation) */}
+          {stepIndex >= 2 && (
+            <mesh position={[0, 0.18, 0]}>
+              <sphereGeometry args={[0.025, 8, 8]} />
+              <meshStandardMaterial color="#e11d48" roughness={0.2} />
+            </mesh>
           )}
         </group>
       );
@@ -407,8 +407,8 @@ export const Product3DItem: React.FC<{ productId: ProductId; isFinished: boolean
             <torusGeometry args={[0.11, 0.055, 12, 20]} />
             <meshStandardMaterial color="#d97706" roughness={0.5} />
           </mesh>
-          {/* If decorated: Pink Strawberry Glaze */}
-          {isFinished && (
+          {/* If decorated step 1: Pink Strawberry Glaze */}
+          {stepIndex >= 1 && (
             <mesh position={[0, 0, 0.02]}>
               <torusGeometry args={[0.11, 0.045, 10, 20, Math.PI * 1.8]} />
               <meshStandardMaterial color="#f472b6" roughness={0.2} />
@@ -430,8 +430,15 @@ export const Product3DItem: React.FC<{ productId: ProductId; isFinished: boolean
             <cylinderGeometry args={[0.13, 0.13, 0.02, 14]} />
             <meshStandardMaterial color="#fef08a" roughness={0.3} />
           </mesh>
-          {/* If decorated: Fresh Strawberries + Cream */}
-          {isFinished && (
+          {/* Step 1: Cream center swirl */}
+          {stepIndex >= 1 && (
+            <mesh position={[0, 0.06, 0]}>
+              <sphereGeometry args={[0.03, 8, 8]} />
+              <meshStandardMaterial color="#ffffff" roughness={0.3} />
+            </mesh>
+          )}
+          {/* Step 2: Fresh Strawberries */}
+          {stepIndex >= 2 && (
             <group position={[0, 0.045, 0]}>
               {[-0.05, 0.05].map(x =>
                 [-0.05, 0.05].map(z => (
@@ -441,11 +448,6 @@ export const Product3DItem: React.FC<{ productId: ProductId; isFinished: boolean
                   </mesh>
                 ))
               )}
-              {/* Cream center swirl */}
-              <mesh position={[0, 0.015, 0]}>
-                <sphereGeometry args={[0.03, 8, 8]} />
-                <meshStandardMaterial color="#ffffff" roughness={0.3} />
-              </mesh>
             </group>
           )}
         </group>
@@ -459,14 +461,16 @@ export const Product3DItem: React.FC<{ productId: ProductId; isFinished: boolean
             <cylinderGeometry args={[0.16, 0.16, 0.09, 16]} />
             <meshStandardMaterial color="#fed7aa" roughness={0.5} />
           </mesh>
-          {/* If decorated: Royal Violet Icing + Cream Drops */}
-          {isFinished && (
+          {/* If decorated step 1: Royal Violet Icing */}
+          {stepIndex >= 1 && (
+            <mesh position={[0, 0.045, 0]}>
+              <cylinderGeometry args={[0.165, 0.165, 0.02, 16]} />
+              <meshStandardMaterial color="#a855f7" roughness={0.2} />
+            </mesh>
+          )}
+          {/* Step 2: Cute Candle in center */}
+          {stepIndex >= 2 && (
             <group position={[0, 0.045, 0]}>
-              <mesh>
-                <cylinderGeometry args={[0.165, 0.165, 0.02, 16]} />
-                <meshStandardMaterial color="#a855f7" roughness={0.2} />
-              </mesh>
-              {/* Cute Candle in center */}
               <mesh position={[0, 0.06, 0]}>
                 <cylinderGeometry args={[0.012, 0.012, 0.08, 6]} />
                 <meshStandardMaterial color="#fbbf24" />
