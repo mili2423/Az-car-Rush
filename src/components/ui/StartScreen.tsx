@@ -151,22 +151,18 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           />
         </div>
 
-        {/* Pastilla temática + Botón de Silencio */}
-        <div className="flex items-center gap-2.5">
 
-
-          <button
-            onClick={onToggleMute}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/90 border-2 border-amber-300 shadow-md transition-all hover:bg-amber-50 hover:scale-105 active:scale-95"
-            title={isMuted ? 'Activar Sonido' : 'Silenciar'}
-          >
-            {isMuted ? (
-              <VolumeX className="w-5 h-5 text-stone-400" />
-            ) : (
-              <Volume2 className="w-5 h-5 text-amber-600" />
-            )}
-          </button>
-        </div>
+        <button
+          onClick={onToggleMute}
+          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/90 border-2 border-amber-300 shadow-md transition-all hover:bg-amber-50 hover:scale-105 active:scale-95"
+          title={isMuted ? 'Activar Sonido' : 'Silenciar'}
+        >
+          {isMuted ? (
+            <VolumeX className="w-5 h-5 text-stone-400" />
+          ) : (
+            <Volume2 className="w-5 h-5 text-amber-600" />
+          )}
+        </button>a
       </header>
 
       {/* ============================================================== */}
