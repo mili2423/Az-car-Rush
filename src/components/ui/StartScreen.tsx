@@ -153,9 +153,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
 
         {/* Pastilla temática + Botón de Silencio */}
         <div className="flex items-center gap-2.5">
-          <div className="hidden sm:flex items-center gap-2 bg-white/85 backdrop-blur-md border-2 border-pink-200/80 px-4 py-1.5 rounded-2xl shadow-sm text-pink-700">
-            <Sparkles className="w-4 h-4 text-pink-500 animate-pulse" />
-          </div>
+
 
           <button
             onClick={onToggleMute}

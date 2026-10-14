@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { Star, Trophy, ArrowRight, ShoppingBag, RotateCcw } from 'lucide-react';
+import { Star, Trophy, ArrowRight, ShoppingBag, RotateCcw, Award, DollarSign } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { CandyButton, CandyCard, CandyBadge, CandyProgressBar } from '@/components/ui/design-system';
 import { sounds } from '@/utils/audio';
 
 interface LevelSummaryModalProps {
@@ -34,9 +35,34 @@ export const LevelSummaryModal: React.FC<LevelSummaryModalProps> = ({
     if (isVictory) {
       sounds.playLevelWon();
       try {
-        confetti({ particleCount: 90, spread: 75, origin: { y: 0.55 }, colors: ['#f59e0b', '#ea580c', '#d97706', '#fbbf24', '#fde68a', '#fb923c'] });
-        setTimeout(() => confetti({ particleCount: 40, angle: 60, spread: 50, origin: { x: 0 }, colors: ['#d97706', '#fbbf24'] }), 400);
-        setTimeout(() => confetti({ particleCount: 40, angle: 120, spread: 50, origin: { x: 1 }, colors: ['#ea580c', '#fde68a'] }), 600);
+        confetti({
+          particleCount: 80,
+          spread: 75,
+          origin: { y: 0.55 },
+          colors: ['#ec4899', '#f43f5e', '#fbbf24', '#a855f7', '#38bdf8'],
+        });
+        setTimeout(
+          () =>
+            confetti({
+              particleCount: 40,
+              angle: 60,
+              spread: 50,
+              origin: { x: 0 },
+              colors: ['#ec4899', '#fbbf24'],
+            }),
+          350
+        );
+        setTimeout(
+          () =>
+            confetti({
+              particleCount: 40,
+              angle: 120,
+              spread: 50,
+              origin: { x: 1 },
+              colors: ['#a855f7', '#38bdf8'],
+            }),
+          550
+        );
       } catch (e) {}
     } else {
       sounds.playError();
@@ -46,108 +72,159 @@ export const LevelSummaryModal: React.FC<LevelSummaryModalProps> = ({
   const moneyProgress = Math.min(100, (money / targetMoney) * 100);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none"
-      style={{ background: 'rgba(60,40,20,0.55)', backdropFilter: 'blur(8px)' }}>
-      <div className="relative flex flex-col items-center max-w-md w-full rounded-3xl p-8 text-center shadow-2xl"
-        style={{
-          background: 'linear-gradient(160deg, #fffbf5 0%, #fef6e8 60%, #fff9f0 100%)',
-          border: isVictory ? '2.5px solid rgba(251,191,36,0.6)' : '2.5px solid rgba(239,68,68,0.35)',
-          boxShadow: '0 16px 64px rgba(120,80,20,0.25), 0 4px 16px rgba(120,80,20,0.1)',
-        }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none bg-slate-950/60 backdrop-blur-sm">
+      <CandyCard
+        variant="cream"
+        className="relative flex flex-col items-center max-w-md w-full p-7 sm:p-8 text-center shadow-2xl border-4 border-pink-300 animate-scale-in"
+      >
+        {/* Glow superior */}
+        <div className="absolute top-0 left-6 right-6 h-1.5 bg-gradient-to-r from-pink-400 via-purple-400 to-amber-300 rounded-b-full pointer-events-none" />
 
-        {/* Icono principal */}
-        <div className="relative mb-4">
+        {/* Icono central de estado */}
+        <div className="relative mb-3.5">
           {isVictory ? (
-            <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #fbbf24, #d97706)', boxShadow: '0 8px 32px rgba(251,191,36,0.4)' }}>
-              <Trophy className="w-10 h-10 text-white drop-shadow" />
+            <div
+              className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg border-2 border-white transition-transform hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
+                boxShadow: '0 10px 24px rgba(245,158,11,0.35)',
+              }}
+            >
+              <Trophy className="w-10 h-10 text-white drop-shadow-md" />
             </div>
           ) : (
-            <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #ef4444, #b91c1c)', boxShadow: '0 8px 32px rgba(239,68,68,0.3)' }}>
-              <RotateCcw className="w-10 h-10 text-white drop-shadow" />
+            <div
+              className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg border-2 border-white transition-transform hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 50%, #be123c 100%)',
+                boxShadow: '0 10px 24px rgba(225,29,72,0.35)',
+              }}
+            >
+              <RotateCcw className="w-10 h-10 text-white drop-shadow-md" />
             </div>
           )}
         </div>
 
-        {/* Título */}
-        <h2 className="text-2xl md:text-3xl font-black mb-1"
-          style={{ color: isVictory ? '#78350f' : '#991b1b' }}>
-          {isVictory ? `¡Día ${levelNumber} Completado!` : `Día ${levelNumber} sin terminar`}
+        {/* Badge del Día */}
+        <CandyBadge
+          variant={isVictory ? 'warning' : 'primary'}
+          size="sm"
+          className="mb-2"
+        >
+          {isVictory ? `Día ${levelNumber} Completado` : `Día ${levelNumber} Terminado`}
+        </CandyBadge>
+
+        {/* Título Principal */}
+        <h2 className="text-2xl sm:text-3xl font-black text-[#451a03] mb-1">
+          {isVictory ? '¡Jornada Exitosa!' : '¡Agotaste el Tiempo o Vidas!'}
         </h2>
-        <p className="text-xs text-stone-500 mb-5 font-medium leading-relaxed">
+        <p className="text-xs text-stone-600 mb-5 font-semibold leading-relaxed max-w-xs">
           {isVictory
-            ? '¡Excelente jornada! Los clientes quedaron encantados con tus delicias.'
-            : 'Se agotó el tiempo o las vidas. ¡Sigue adelante, la próxima será mejor!'}
+            ? 'Tus postres cautivaron a los clientes. ¡Sigue así para la Gran Apertura!'
+            : 'Los pedidos se complicaron pero la pastelería sigue en pie. ¡Reinténtalo!'}
         </p>
 
-        {/* Estrellas */}
+        {/* Estrellas Ganadas */}
         {isVictory && (
           <div className="flex items-center justify-center gap-2 mb-5">
             {[1, 2, 3].map(s => (
-              <Star key={s} className="w-10 h-10 transition-all duration-500"
+              <div
+                key={s}
+                className="transition-transform duration-300"
                 style={{
-                  fill: s <= stars ? '#fbbf24' : '#e5e7eb',
-                  color: s <= stars ? '#d97706' : '#d1d5db',
-                  transform: `scale(${s <= stars ? 1.15 : 0.85})`,
-                  transitionDelay: `${s * 120}ms`,
-                  filter: s <= stars ? 'drop-shadow(0 2px 6px rgba(251,191,36,0.5))' : 'none',
-                }} />
+                  transform: s <= stars ? 'scale(1.15)' : 'scale(0.9)',
+                }}
+              >
+                <Star
+                  className={`w-9 h-9 transition-colors ${
+                    s <= stars
+                      ? 'fill-amber-400 text-amber-500 drop-shadow-[0_2px_8px_rgba(251,191,36,0.5)]'
+                      : 'fill-stone-200 text-stone-300'
+                  }`}
+                />
+              </div>
             ))}
           </div>
         )}
 
-        {/* Stats */}
-        <div className="w-full grid grid-cols-2 gap-3 mb-6">
-          <div className="p-3.5 rounded-2xl text-left bg-amber-50 border border-amber-200">
-            <div className="text-[10px] font-black uppercase tracking-wider text-amber-700 mb-1">Recaudación</div>
-            <div className="text-lg font-black text-stone-800">${money.toLocaleString()}</div>
-            <div className="w-full h-1.5 rounded-full mt-2 overflow-hidden bg-amber-100">
-              <div className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${moneyProgress}%`, background: moneyProgress >= 100 ? '#16a34a' : 'linear-gradient(90deg, #d97706, #ea580c)' }} />
+        {/* Estadísticas de la Jornada */}
+        <div className="w-full grid grid-cols-2 gap-2.5 mb-6 text-left">
+          {/* Recaudación */}
+          <div className="p-3.5 rounded-2xl bg-amber-50/80 border-2 border-amber-200/90 shadow-2xs">
+            <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-amber-800 mb-1">
+              <DollarSign className="w-3.5 h-3.5 text-amber-600" />
+              <span>Recaudación</span>
             </div>
-            <div className="text-[10px] mt-1 text-stone-400">Meta: ${targetMoney.toLocaleString()}</div>
+            <div className="text-lg font-black text-[#451a03]">${money.toLocaleString()}</div>
+            <div className="mt-2">
+              <CandyProgressBar value={moneyProgress} variant={moneyProgress >= 100 ? 'success' : 'warning'} size="sm" />
+            </div>
+            <div className="text-[10px] mt-1 font-bold text-stone-400">
+              Meta: ${targetMoney.toLocaleString()}
+            </div>
           </div>
-          <div className="p-3.5 rounded-2xl text-left bg-orange-50 border border-orange-200">
-            <div className="text-[10px] font-black uppercase tracking-wider text-orange-700 mb-1">Puntaje</div>
-            <div className="text-lg font-black text-stone-800">{score.toLocaleString()} pts</div>
-            <div className="text-[10px] mt-2 text-stone-400">{ordersDelivered} pedidos entregados</div>
+
+          {/* Puntaje y pedidos */}
+          <div className="p-3.5 rounded-2xl bg-purple-50/80 border-2 border-purple-200/90 shadow-2xs">
+            <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-purple-800 mb-1">
+              <Award className="w-3.5 h-3.5 text-purple-600" />
+              <span>Puntaje</span>
+            </div>
+            <div className="text-lg font-black text-[#451a03]">{score.toLocaleString()} pts</div>
+            <div className="text-[10px] mt-3 font-bold text-stone-500">
+              {ordersDelivered} {ordersDelivered === 1 ? 'pedido entregado' : 'pedidos entregados'}
+            </div>
           </div>
         </div>
 
-        {/* Botones */}
+        {/* Botonera con CandyButton */}
         <div className="w-full space-y-2.5">
           {isVictory ? (
             <>
-              <button onClick={onNextLevel}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-base text-white transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg"
-                style={{ background: 'linear-gradient(135deg, #d97706, #ea580c)', boxShadow: '0 4px 20px rgba(217,119,6,0.35)' }}>
-                <span>{levelNumber >= 5 ? 'Ver Victoria Final' : 'Siguiente Día'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <button onClick={onOpenShop}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-semibold text-xs text-stone-600 bg-white border-2 border-stone-200 hover:bg-stone-50 transition-colors">
-                <ShoppingBag className="w-4 h-4 text-stone-400" />
-                <span>Ir a la Tienda de Mejoras</span>
-              </button>
+              <CandyButton
+                variant="primary"
+                size="lg"
+                fullWidth
+                icon={<ArrowRight className="w-5 h-5 ml-1" />}
+                iconPosition="right"
+                onClick={onNextLevel}
+              >
+                {levelNumber >= 5 ? 'Ver Victoria Final' : 'Siguiente Día'}
+              </CandyButton>
+              <CandyButton
+                variant="warning"
+                size="md"
+                fullWidth
+                icon={<ShoppingBag className="w-4 h-4" />}
+                onClick={onOpenShop}
+              >
+                Tienda de Mejoras
+              </CandyButton>
             </>
           ) : (
             <>
-              <button onClick={onRetry}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-sm text-white transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg"
-                style={{ background: 'linear-gradient(135deg, #d97706, #ea580c)', boxShadow: '0 4px 20px rgba(217,119,6,0.35)' }}>
-                <RotateCcw className="w-4 h-4" />
-                <span>Reintentar Día</span>
-              </button>
-              <button onClick={onOpenShop}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-semibold text-xs text-stone-600 bg-white border-2 border-stone-200 hover:bg-stone-50 transition-colors">
-                <ShoppingBag className="w-4 h-4 text-stone-400" />
-                <span>Comprar Mejoras antes de reintentar</span>
-              </button>
+              <CandyButton
+                variant="primary"
+                size="lg"
+                fullWidth
+                icon={<RotateCcw className="w-5 h-5" />}
+                onClick={onRetry}
+              >
+                Reintentar Día {levelNumber}
+              </CandyButton>
+              <CandyButton
+                variant="warning"
+                size="md"
+                fullWidth
+                icon={<ShoppingBag className="w-4 h-4" />}
+                onClick={onOpenShop}
+              >
+                Comprar Mejoras
+              </CandyButton>
             </>
           )}
         </div>
-      </div>
+      </CandyCard>
     </div>
   );
 };

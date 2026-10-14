@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { CandyCard, CandyButton, CandyBadge } from '@/components/ui/design-system';
 import { sounds } from '@/utils/audio';
+import { Sparkles, X } from 'lucide-react';
 
 interface MixerMinigameProps {
   onSuccess: () => void;
@@ -105,21 +107,42 @@ export const MixerMinigame: React.FC<MixerMinigameProps> = ({
   }, []);
 
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto">
-      <div className="relative flex flex-col items-center rounded-3xl border-4 border-pink-300 bg-white/95 p-8 shadow-2xl max-w-sm w-full text-center animate-scale-in">
-        <div className="text-4xl mb-2 animate-bounce">🥣</div>
-        <h3 className="text-2xl font-black text-amber-900 mb-1">
-          Mesa de Mezcla
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm pointer-events-auto select-none p-4">
+      <CandyCard
+        variant="cream"
+        className="relative flex flex-col items-center max-w-sm w-full p-7 text-center shadow-2xl border-4 border-pink-300 animate-scale-in"
+      >
+        {/* Botón Cerrar */}
+        <button
+          onClick={onCancel}
+          className="absolute top-4 right-4 p-2 rounded-full text-stone-400 hover:text-pink-600 hover:bg-pink-100 transition-colors"
+          title="Cancelar (Esc)"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Icono animado */}
+        <div className="w-16 h-16 rounded-2xl bg-pink-100/90 border-2 border-pink-200 flex items-center justify-center text-3xl mb-3 shadow-inner">
+          🥣
+        </div>
+
+        {/* Badge */}
+        <CandyBadge variant="primary" size="sm" className="mb-2">
+          Estación de Mezcla
+        </CandyBadge>
+
+        <h3 className="text-2xl font-black text-[#451a03] mb-1">
+          Batidora Pastelera
         </h3>
-        <p className="text-xs text-gray-500 mb-6">
-          Mantén presionado <kbd className="px-2 py-0.5 bg-pink-100 text-pink-700 font-bold rounded shadow-sm">E</kbd> o <kbd className="px-2 py-0.5 bg-pink-100 text-pink-700 font-bold rounded shadow-sm">ESPACIO</kbd> y suelta en la <span className="text-emerald-600 font-bold">Zona Verde</span>
+        <p className="text-xs text-stone-600 mb-5 font-semibold leading-relaxed">
+          Mantén presionado <kbd className="px-1.5 py-0.5 bg-pink-100 text-pink-700 font-bold rounded shadow-2xs border border-pink-200">[E]</kbd> o <kbd className="px-1.5 py-0.5 bg-pink-100 text-pink-700 font-bold rounded shadow-2xs border border-pink-200">ESPACIO</kbd> y suelta en la <strong className="text-emerald-700 font-black">Zona Verde</strong>.
         </p>
 
-        {/* Gauge Bar */}
-        <div className="relative w-full h-9 bg-slate-200 rounded-full overflow-hidden border-2 border-slate-300 mb-5 shadow-inner">
-          {/* Target Sweet Spot Area */}
+        {/* Barra medidora con estética Candy */}
+        <div className="relative w-full h-10 bg-stone-200/90 rounded-full overflow-hidden border-2 border-stone-300 mb-4 shadow-inner p-0.5">
+          {/* Zona dulce verde (Sweet Spot) */}
           <div
-            className="absolute top-0 bottom-0 bg-emerald-400/90 border-x-2 border-emerald-600 flex items-center justify-center text-[10px] font-black text-emerald-950 uppercase tracking-widest"
+            className="absolute top-0 bottom-0 bg-emerald-400/85 border-x-2 border-emerald-600 flex items-center justify-center text-[10px] font-black text-emerald-950 uppercase tracking-widest"
             style={{
               left: `${TARGET_MIN}%`,
               width: `${TARGET_MAX - TARGET_MIN}%`,
@@ -128,38 +151,43 @@ export const MixerMinigame: React.FC<MixerMinigameProps> = ({
             Listo
           </div>
 
-          {/* Current Needle Fill */}
+          {/* Relleno progresivo */}
           <div
-            className={`h-full transition-all duration-75 ${
+            className={`h-full rounded-full transition-all duration-75 ${
               gauge >= TARGET_MIN && gauge <= TARGET_MAX
                 ? 'bg-gradient-to-r from-amber-400 to-emerald-500'
                 : gauge > TARGET_MAX
-                ? 'bg-rose-500'
-                : 'bg-gradient-to-r from-pink-400 to-amber-300'
+                ? 'bg-gradient-to-r from-rose-500 to-red-600'
+                : 'bg-gradient-to-r from-pink-400 via-rose-400 to-amber-300'
             }`}
             style={{ width: `${gauge}%` }}
           />
 
-          {/* Needle Pin Indicator */}
+          {/* Aguja / Marcador */}
           <div
-            className="absolute top-0 bottom-0 w-2 bg-slate-900 shadow-md transform -translate-x-1"
+            className="absolute top-0 bottom-0 w-2.5 bg-stone-900 shadow-md transform -translate-x-1/2 rounded-full border border-white"
             style={{ left: `${gauge}%` }}
           />
         </div>
 
-        {/* Status Message */}
-        {message ? (
-          <div className="h-8 text-sm font-black text-pink-600 animate-bounce">
-            {message}
-          </div>
-        ) : (
-          <div className="h-8 text-xs font-bold text-slate-500">
-            {isPressing ? '¡Batiendo con fuerza! 🌀 Suelta en Verde' : 'Mantén presionado para mezclar...'}
-          </div>
-        )}
+        {/* Mensaje de estado */}
+        <div className="h-7 mb-2 flex items-center justify-center">
+          {message ? (
+            <div className="text-xs font-black text-pink-600 animate-bounce">
+              {message}
+            </div>
+          ) : (
+            <div className="text-xs font-bold text-stone-500">
+              {isPressing ? '¡Batiendo con fuerza! 🌀 Suelta en Verde' : 'Presiona o haz click para batir...'}
+            </div>
+          )}
+        </div>
 
-        {/* Interactive Button for Mouse/Touch */}
-        <button
+        {/* Botón táctil / ratón interactivo */}
+        <CandyButton
+          variant={isPressing ? 'warning' : 'primary'}
+          size="lg"
+          fullWidth
           onMouseDown={() => {
             isPressingRef.current = true;
             setIsPressing(true);
@@ -182,22 +210,17 @@ export const MixerMinigame: React.FC<MixerMinigameProps> = ({
               handleEvaluate();
             }
           }}
-          className={`w-full py-3.5 mt-2 rounded-2xl font-black text-base transition-transform shadow-lg ${
-            isPressing
-              ? 'scale-95 bg-pink-600 text-white shadow-inner'
-              : 'bg-gradient-to-r from-pink-500 to-rose-400 text-white hover:brightness-105 active:scale-95'
-          }`}
         >
-          {isPressing ? '¡SOLTAR EN ZONA VERDE!' : 'Mantener para Batir [E / ESPACIO]'}
-        </button>
+          {isPressing ? '¡SOLTAR EN ZONA VERDE!' : 'Mantener para Batir [E]'}
+        </CandyButton>
 
         <button
           onClick={onCancel}
-          className="mt-3 text-xs font-semibold text-gray-400 hover:text-gray-700"
+          className="mt-3 text-xs font-bold text-stone-400 hover:text-stone-600 transition-colors"
         >
           Cancelar [ESC]
         </button>
-      </div>
+      </CandyCard>
     </div>
   );
 };

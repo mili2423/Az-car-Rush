@@ -8,6 +8,7 @@ import { ProductId, RECIPES, DECORATION_OPTIONS, DecorationOption } from '@/type
 import { Product3DItem } from '@/components/3d/HeldItem3D';
 import { sounds } from '@/utils/audio';
 import { X, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { CandyCard, CandyBadge, CandyButton } from '@/components/ui/design-system';
 
 interface DecorationMinigameProps {
   productId: ProductId;
@@ -119,23 +120,26 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-between items-center bg-stone-950/80 backdrop-blur-md select-none p-3 sm:p-5">
+    <div className="fixed inset-0 z-50 flex flex-col justify-between items-center bg-slate-950/75 backdrop-blur-md select-none p-3 sm:p-5">
       {/* ============================================================== */}
       {/* 1. HEADER: Tarjeta de Pedido del Cliente                       */}
       {/* ============================================================== */}
-      <header className="w-full max-w-2xl flex items-center justify-between gap-3 bg-white/95 border-2 border-pink-300 rounded-2xl p-3 sm:p-4 shadow-xl z-20">
+      <CandyCard
+        variant="cream"
+        className="w-full max-w-2xl flex items-center justify-between gap-3 p-3.5 sm:p-4 shadow-xl border-2 border-pink-300 z-20"
+      >
         <div className="flex items-center gap-3">
           <div className="text-3xl sm:text-4xl animate-bounce">{recipe.emoji}</div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full border border-pink-200">
+              <CandyBadge variant="primary" size="sm">
                 Mesa de Decoración
-              </span>
+              </CandyBadge>
               <span className="text-xs font-bold text-stone-500">
                 Paso {Math.min(currentStep + 1, totalSteps)} de {totalSteps}
               </span>
             </div>
-            <h2 className="text-lg sm:text-xl font-black text-stone-800">
+            <h2 className="text-lg sm:text-xl font-black text-[#451a03]">
               Decorando: <span className="text-pink-600">{recipe.name}</span>
             </h2>
           </div>
@@ -153,22 +157,22 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
             return (
               <div
                 key={`req-${idx}`}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black transition-all ${
                   isStepWrong
-                    ? 'bg-red-50 border-red-300 text-red-700'
+                    ? 'bg-rose-100 border-rose-300 text-rose-800'
                     : isDone
-                    ? 'bg-green-50 border-green-300 text-green-700'
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800'
                     : isCurrent
-                    ? 'bg-amber-50 border-amber-300 text-amber-900 ring-2 ring-pink-400'
-                    : 'bg-stone-50 border-stone-200 text-stone-400'
+                    ? 'bg-amber-100 border-amber-300 text-amber-950 ring-2 ring-pink-400'
+                    : 'bg-white/80 border-stone-200 text-stone-400'
                 }`}
               >
                 <span>{decOpt?.icon || '🎨'}</span>
                 <span>{decOpt?.name || decId}</span>
                 {isStepWrong ? (
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 ml-1" />
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-600 ml-0.5" />
                 ) : isDone ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-green-600 ml-1" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 ml-0.5" />
                 ) : null}
               </div>
             );
@@ -178,25 +182,27 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
         {/* Botón cancelar */}
         <button
           onClick={onCancel}
-          className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+          className="p-2 rounded-full text-stone-400 hover:text-pink-600 hover:bg-pink-100 transition-colors"
           title="Cancelar decoración (Esc)"
         >
           <X className="w-5 h-5" />
         </button>
-      </header>
+      </CandyCard>
 
       {/* ============================================================== */}
       {/* 2. ZONA CENTRAL: Canvas 3D del producto en primer plano        */}
       {/* ============================================================== */}
-      <main className="relative flex-1 w-full max-w-xl flex items-center justify-center my-1 z-10 min-h-[220px]">
+      <main className="relative flex-1 w-full max-w-xl flex items-center justify-center my-1 z-10 min-h-[200px]">
         {/* Banner de estado efímero */}
         {lastActionFeedback && (
           <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
-            <div className={`px-4 py-1.5 rounded-full text-xs font-black shadow-lg flex items-center gap-1.5 animate-scale-in ${
-              hasError && lastActionFeedback.includes('incorrecta')
-                ? 'bg-red-500 text-white border-2 border-red-300'
-                : 'bg-emerald-500 text-white border-2 border-emerald-300'
-            }`}>
+            <div
+              className={`px-4 py-1.5 rounded-full text-xs font-black shadow-lg flex items-center gap-1.5 animate-scale-in border-2 ${
+                hasError && lastActionFeedback.includes('incorrecta')
+                  ? 'bg-gradient-to-r from-rose-500 to-red-600 text-white border-rose-300'
+                  : 'bg-gradient-to-r from-emerald-500 to-green-600 text-white border-emerald-300'
+              }`}
+            >
               <Sparkles className="w-3.5 h-3.5" />
               <span>{lastActionFeedback}</span>
             </div>
@@ -205,18 +211,18 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
 
         {/* Modal de éxito o error al completar */}
         {isCompleted && (
-          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-xs rounded-3xl animate-scale-in">
-            <div className="bg-white/95 border-4 border-amber-300 px-6 py-4 rounded-3xl text-center shadow-2xl">
+          <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs rounded-3xl animate-scale-in">
+            <CandyCard variant="cream" className="p-6 text-center shadow-2xl border-4 border-amber-300 max-w-xs w-full">
               <div className="text-4xl mb-1">{hasError ? '⚠️' : '✨'}</div>
-              <div className="text-lg font-black text-stone-800">
+              <div className="text-lg font-black text-[#451a03]">
                 {hasError ? 'Decoración Errónea' : '¡Decoración Perfecta!'}
               </div>
-              <p className="text-xs font-semibold text-stone-500 mt-0.5">
+              <p className="text-xs font-semibold text-stone-500 mt-1">
                 {hasError
                   ? 'El cliente notará los adornos equivocados (-puntos)'
                   : 'Listo para servir y ganar propina extra'}
               </p>
-            </div>
+            </CandyCard>
           </div>
         )}
 
@@ -245,13 +251,16 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
       {/* ============================================================== */}
       {/* 3. FOOTER: Grilla de Botones de Decoración Cuadrados Redondeados */}
       {/* ============================================================== */}
-      <footer className="w-full max-w-2xl bg-white/95 border-2 border-pink-300 rounded-3xl p-3 sm:p-4 shadow-2xl z-20 flex flex-col items-center">
-        <div className="text-xs font-black text-stone-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+      <CandyCard
+        variant="cream"
+        className="w-full max-w-2xl p-3 sm:p-4 shadow-2xl border-2 border-pink-300 z-20 flex flex-col items-center"
+      >
+        <div className="text-xs font-black text-[#451a03] uppercase tracking-wider mb-2 flex items-center gap-1.5">
           <span>🎨</span>
           <span>Elige la decoración del pedido:</span>
         </div>
 
-        {/* Grilla prolija de botones táctiles */}
+        {/* Grilla prolija de botones con sombras inferiores sólidas */}
         <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-2 w-full justify-items-center">
           {DECORATION_OPTIONS.map(opt => {
             const isBase = opt.category === 'base';
@@ -260,9 +269,9 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
                 key={opt.id}
                 onClick={() => handleSelectDecoration(opt)}
                 disabled={isCompleted}
-                className="group flex flex-col items-center justify-center p-2 rounded-2xl w-full h-[72px] sm:h-[76px] transition-all hover:scale-105 active:scale-95 disabled:opacity-50 select-none shadow-sm"
+                className="group flex flex-col items-center justify-center p-2 rounded-2xl w-full h-[72px] sm:h-[76px] transition-all hover:scale-105 active:scale-95 disabled:opacity-45 select-none shadow-[0_3px_0_rgba(0,0,0,0.1)] active:translate-y-0.5 active:shadow-none"
                 style={{
-                  background: `${opt.color}18`,
+                  background: `${opt.color}15`,
                   border: `2px solid ${opt.color}`,
                 }}
                 title={`${opt.name} (${isBase ? 'Borde/Glaseado' : 'Topping'})`}
@@ -270,7 +279,7 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
                 <span className="text-2xl sm:text-3xl group-hover:scale-110 transition-transform">
                   {opt.icon}
                 </span>
-                <span className="text-[10px] font-black text-stone-800 text-center leading-tight mt-1 line-clamp-1">
+                <span className="text-[10px] font-black text-[#451a03] text-center leading-tight mt-1 line-clamp-1">
                   {opt.name}
                 </span>
                 <span className="text-[8px] font-bold text-stone-500 uppercase">
@@ -280,7 +289,7 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
             );
           })}
         </div>
-      </footer>
+      </CandyCard>
     </div>
   );
 };
