@@ -37,6 +37,7 @@ import { DecorationMinigame } from '@/components/ui/DecorationMinigame';
 import { LevelSummaryModal } from '@/components/ui/LevelSummaryModal';
 import { GameWinModal } from '@/components/ui/GameWinModal';
 import { MiniTutorialModal } from '@/components/ui/MiniTutorialModal';
+import { PauseModal } from '@/components/ui/PauseModal';
 
 // ============================================================================
 // ESCENA 3D (Three.js / React Three Fiber con SSR desactivado)

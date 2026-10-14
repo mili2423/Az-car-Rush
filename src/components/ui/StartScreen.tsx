@@ -162,7 +162,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           ) : (
             <Volume2 className="w-5 h-5 text-amber-600" />
           )}
-        </button>a
+        </button>
       </header>
 
       {/* ============================================================== */}
