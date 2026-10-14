@@ -21,6 +21,7 @@ interface BakerySceneProps {
   onInteract: () => void;
   isLocked: boolean;
   setIsLocked: (locked: boolean) => void;
+  isPaused?: boolean;
 }
 
 export const BakeryScene: React.FC<BakerySceneProps> = ({
@@ -35,6 +36,7 @@ export const BakeryScene: React.FC<BakerySceneProps> = ({
   onInteract,
   isLocked,
   setIsLocked,
+  isPaused = false,
 }) => {
   const [isMoving, setIsMoving] = useState(false);
 
@@ -70,8 +72,8 @@ export const BakeryScene: React.FC<BakerySceneProps> = ({
         </Suspense>
       </Canvas>
 
-      {/* Pointer Lock Resume Overlay (when paused or lost focus) */}
-      {!isLocked && (
+      {/* Pointer Lock Resume Overlay (when lost focus, but not when paused) */}
+      {!isLocked && !isPaused && (
         <div
           onClick={() => {
             const canvas = document.querySelector('canvas');

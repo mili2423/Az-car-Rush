@@ -330,6 +330,92 @@ export default function GamePage() {
   };
 
   // --------------------------------------------------------------------------
+  // 9b. SALIR AL HOME DESDE PAUSA (LIMPIA LA PARTIDA Y PRESERVA PROGRESO)
+  // --------------------------------------------------------------------------
+  const handleReturnHome = useCallback(() => {
+    // 1. Frenar sonidos y música de la partida
+    sounds.stopBGM();
+
+    // 2. Liberar el control del mouse (pointer lock) y restaurar cursor normal
+    if (document.pointerLockElement) {
+      document.exitPointerLock?.();
+    }
+    setIsLocked(false);
+    setIsPaused(false);
+
+    // 3. Frenar minijuegos y limpiar estados interactivos
+    setIsMixerActive(false);
+    setMixingProgress(null);
+    setDecoratingRecipe(null);
+    setTableState({
+      productId: null,
+      step: 0,
+      isIncorrect: false,
+    });
+    setFocusedObject(null);
+    setIsAwaitingNextCustomer(false);
+
+    // 4. Limpiar estado de la partida en curso (pedidos, clientes, bandeja, horno, vidas y puntos del día)
+    setCurrentOrder(null);
+    setTray({ type: 'empty' });
+    setOvenState({
+      isCooking: false,
+      recipeId: null,
+      progress: 0,
+      burnProgress: 0,
+      isReady: false,
+      isBurnt: false,
+    });
+    setMoney(0);
+    setScore(0);
+    setOrdersDeliveredCount(0);
+
+    // 5. Desmontar escena 3D y volver al home (manteniendo el progreso en Supabase/storage intacto)
+    setScreen('home');
+  }, []);
+
+  // --------------------------------------------------------------------------
+  // 9c. CONTROL DE TECLA ESC Y PAUSA AUTOMÁTICA AL SOLTAR POINTER LOCK
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (screen === 'playing' && !isPaused) {
+          // Solo si no hay un minijuego o modal abierto
+          if (!decoratingRecipe && !showTutorial && !showHowToPlay && !showShop && !showCredits) {
+            e.preventDefault();
+            if (document.pointerLockElement) {
+              document.exitPointerLock?.();
+            }
+            setIsLocked(false);
+            setIsPaused(true);
+          }
+        }
+      }
+    };
+
+    const handlePointerLockChange = () => {
+      const isLockedNow = document.pointerLockElement !== null;
+      setIsLocked(isLockedNow);
+
+      // Si el puntero se desbloqueó mientras se jugaba y no hay otro modal abierto, pausar
+      if (!isLockedNow && screen === 'playing') {
+        if (!decoratingRecipe && !showTutorial && !showHowToPlay && !showShop && !showCredits) {
+          setIsPaused(prev => (prev ? prev : true));
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('pointerlockchange', handlePointerLockChange);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('pointerlockchange', handlePointerLockChange);
+    };
+  }, [screen, isPaused, decoratingRecipe, showTutorial, showHowToPlay, showShop, showCredits]);
+
+  // --------------------------------------------------------------------------
   // 10. BUCLE PRINCIPAL DEL JUEGO (RELOJ, PACIENCIA DE CLIENTES Y HORNO)
   // --------------------------------------------------------------------------
   useEffect(() => {
@@ -413,7 +499,7 @@ export default function GamePage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [screen, currentLevelDef, money, progress.upgrades, spawnCustomer]);
+  }, [screen, isPaused, currentLevelDef, money, progress.upgrades, spawnCustomer]);
 
   // --------------------------------------------------------------------------
   // 11. EVALUACIÓN DE FIN DE NIVEL
@@ -799,6 +885,7 @@ export default function GamePage() {
             onInteract={handleInteract}
             isLocked={isLocked}
             setIsLocked={setIsLocked}
+            isPaused={isPaused}
           />
 
           <Crosshair
@@ -946,10 +1033,7 @@ export default function GamePage() {
             setIsPaused(false);
             setShowHowToPlay(true);
           }}
-          onReturnHome={() => {
-            setIsPaused(false);
-            setScreen('home');
-          }}
+          onReturnHome={handleReturnHome}
           isMuted={isMuted}
           onToggleMute={toggleMute}
           levelNumber={currentLevelNumber}

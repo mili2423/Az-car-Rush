@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CandyModal, CandyButton, CandyCard } from '@/components/ui/design-system';
+import { CandyModal, CandyButton } from '@/components/ui/design-system';
 import { Play, RotateCcw, Home, Volume2, VolumeX, BookOpen, AlertCircle } from 'lucide-react';
 
 interface PauseModalProps {
@@ -27,10 +27,18 @@ export const PauseModal: React.FC<PauseModalProps> = ({
 }) => {
   const [showConfirmHome, setShowConfirmHome] = React.useState(false);
 
+  // Cada vez que se cierra o vuelve a abrir la pausa, resetear el diálogo de confirmación
+  React.useEffect(() => {
+    if (!isOpen) {
+      setShowConfirmHome(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
     <>
+      {/* 1. Modal Principal de Pausa */}
       <CandyModal
         isOpen={isOpen && !showConfirmHome}
         onClose={onResume}
@@ -40,8 +48,8 @@ export const PauseModal: React.FC<PauseModalProps> = ({
         maxWidth="sm"
         showCloseButton={false}
       >
-        <div className="flex flex-col gap-3">
-          {/* Continuar jugando */}
+        <div className="flex flex-col gap-2.5">
+          {/* Continuar jugando (Botón principal destacado) */}
           <CandyButton
             variant="primary"
             size="lg"
@@ -50,6 +58,17 @@ export const PauseModal: React.FC<PauseModalProps> = ({
             onClick={onResume}
           >
             Continuar Jugando
+          </CandyButton>
+
+          {/* Volver al home (Variante secundaria con ícono de casita) */}
+          <CandyButton
+            variant="secondary"
+            size="md"
+            fullWidth
+            icon={<Home className="w-4 h-4 text-pink-600" />}
+            onClick={() => setShowConfirmHome(true)}
+          >
+            Volver al home
           </CandyButton>
 
           {/* Reintentar nivel */}
@@ -63,72 +82,69 @@ export const PauseModal: React.FC<PauseModalProps> = ({
             Reiniciar Día {levelNumber}
           </CandyButton>
 
-          {/* Ver recetas */}
-          <CandyButton
-            variant="secondary"
-            size="md"
-            fullWidth
-            icon={<BookOpen className="w-4 h-4" />}
-            onClick={onOpenRecipes}
-          >
-            Libro de Recetas
-          </CandyButton>
-
-          <div className="flex gap-2.5 mt-1">
-            {/* Toggle sonido */}
+          {/* Recetas y Sonido en grilla de 2 columnas táctiles */}
+          <div className="grid grid-cols-2 gap-2 mt-0.5">
             <CandyButton
               variant="neutral"
               size="md"
-              fullWidth
-              icon={isMuted ? <VolumeX className="w-4 h-4 text-stone-400" /> : <Volume2 className="w-4 h-4 text-amber-600" />}
-              onClick={onToggleMute}
+              icon={<BookOpen className="w-4 h-4 text-amber-700" />}
+              onClick={onOpenRecipes}
             >
-              {isMuted ? 'Activar Sonido' : 'Silenciar'}
+              Recetas
             </CandyButton>
 
-            {/* Salir al menú */}
             <CandyButton
               variant="neutral"
               size="md"
-              fullWidth
-              icon={<Home className="w-4 h-4" />}
-              onClick={() => setShowConfirmHome(true)}
+              icon={
+                isMuted ? (
+                  <VolumeX className="w-4 h-4 text-stone-400" />
+                ) : (
+                  <Volume2 className="w-4 h-4 text-pink-600" />
+                )
+              }
+              onClick={onToggleMute}
             >
-              Menú
+              {isMuted ? 'Sonido: No' : 'Sonido: Sí'}
             </CandyButton>
           </div>
         </div>
       </CandyModal>
 
-      {/* Modal de confirmación para salir al menú */}
+      {/* 2. Modal de Confirmación para Volver al Inicio */}
       {showConfirmHome && (
         <CandyModal
           isOpen={showConfirmHome}
           onClose={() => setShowConfirmHome(false)}
-          title="¿Salir al Menú Principal?"
-          subtitle="Se perderá el progreso de los clientes atendidos en este día."
+          title="¿Volver al inicio?"
+          subtitle="Vas a perder el progreso de este día"
           icon={<AlertCircle className="w-8 h-8 text-amber-500" />}
           maxWidth="sm"
+          showCloseButton={false}
         >
           <div className="flex flex-col gap-2.5 mt-2">
+            {/* Confirmar salida */}
             <CandyButton
               variant="danger"
               size="md"
               fullWidth
+              icon={<Home className="w-4 h-4" />}
               onClick={() => {
                 setShowConfirmHome(false);
                 onReturnHome();
               }}
             >
-              Sí, Salir al Menú
+              Salir al home
             </CandyButton>
+
+            {/* Cancelar (vuelve a la pausa) */}
             <CandyButton
               variant="neutral"
               size="md"
               fullWidth
               onClick={() => setShowConfirmHome(false)}
             >
-              No, Seguir Jugando
+              Cancelar
             </CandyButton>
           </div>
         </CandyModal>
