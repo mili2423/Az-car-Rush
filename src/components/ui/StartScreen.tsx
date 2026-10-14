@@ -155,9 +155,6 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         <div className="flex items-center gap-2.5">
           <div className="hidden sm:flex items-center gap-2 bg-white/85 backdrop-blur-md border-2 border-pink-200/80 px-4 py-1.5 rounded-2xl shadow-sm text-pink-700">
             <Sparkles className="w-4 h-4 text-pink-500 animate-pulse" />
-            <span className="text-xs font-black tracking-wide">
-              Pastelería 3D en Primera Persona
-            </span>
           </div>
 
           <button
@@ -200,9 +197,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         <div className="mb-3">
           {/* Cartelito superior */}
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-pink-100 border border-pink-300 text-[11px] font-black tracking-widest uppercase text-pink-700 shadow-xs mb-1.5">
-            <span>🧁</span>
-            <span>Pastelería & Cafetería</span>
-            <span>🍰</span>
+
           </div>
 
           {/* Palabra 1: AZÚCAR */}

@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { X, Navigation, MousePointer, Hand, Sparkles } from 'lucide-react';
+import { CandyModal, CandyButton, CandyCard, CandyBadge } from '@/components/ui/design-system';
+import { Navigation, MousePointer, Hand, Sparkles, ChefHat, BookOpen, Flame, UtensilsCrossed } from 'lucide-react';
 import { RECIPES, INGREDIENTS } from '@/types/game';
 
 interface HowToPlayModalProps {
@@ -10,112 +11,114 @@ interface HowToPlayModalProps {
 
 export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 select-none">
-      <div className="relative flex flex-col max-w-2xl w-full max-h-[90vh] rounded-3xl border-4 border-pink-300 bg-white/98 p-6 md:p-8 shadow-2xl overflow-y-auto">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
+    <CandyModal
+      isOpen
+      onClose={onClose}
+      title="Cómo Jugar a Azúcar Rush"
+      subtitle="Guía rápida de controles, estaciones de cocina y recetas de pastelería."
+      icon={<BookOpen className="w-6 h-6 text-pink-600" />}
+      maxWidth="xl"
+      footer={
+        <CandyButton variant="primary" size="lg" fullWidth onClick={onClose}>
+          ¡Entendido, a Cocinar!
+        </CandyButton>
+      }
+    >
+      <div className="space-y-5">
+        {/* 1. Controles en Primera Persona */}
+        <div>
+          <div className="flex items-center gap-2 mb-2.5">
+            <CandyBadge variant="primary" size="sm">Paso 1</CandyBadge>
+            <h3 className="text-sm font-black uppercase tracking-wider text-[#451a03]">
+              Controles en Primera Persona
+            </h3>
+          </div>
 
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-5 h-5 text-pink-500" />
-          <h2 className="text-2xl md:text-3xl font-black text-bakery-choco">
-            Cómo Jugar a Azúcar Rush
-          </h2>
-        </div>
-        <p className="text-xs text-slate-500 mb-6">
-          Guía rápida de controles, estaciones de cocina y recetas de pastelería.
-        </p>
-
-        {/* 1. Controles */}
-        <div className="mb-6">
-          <h3 className="text-sm font-black uppercase tracking-wider text-pink-600 mb-3">
-            1. Controles en Primera Persona
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3 rounded-2xl bg-pink-50 border border-pink-200">
-              <div className="flex items-center gap-2 font-black text-slate-800 text-sm mb-1">
-                <Navigation className="w-4 h-4 text-pink-500" />
-                <span>Teclado WASD</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <CandyCard variant="cream" className="p-3.5 flex flex-col items-center text-center">
+              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-pink-100 text-pink-600 mb-2 border border-pink-200">
+                <Navigation className="w-5 h-5" />
               </div>
-              <p className="text-xs text-slate-600">
-                Camina libremente entre las mesadas de la pastelería.
+              <div className="font-black text-xs text-[#451a03] mb-1">Teclado WASD</div>
+              <p className="text-[11px] text-stone-600 leading-tight">
+                Camina libremente entre las mesadas de la cocina.
               </p>
-            </div>
+            </CandyCard>
 
-            <div className="p-3 rounded-2xl bg-pink-50 border border-pink-200">
-              <div className="flex items-center gap-2 font-black text-slate-800 text-sm mb-1">
-                <MousePointer className="w-4 h-4 text-pink-500" />
-                <span>Mouse (Mirar)</span>
+            <CandyCard variant="cream" className="p-3.5 flex flex-col items-center text-center">
+              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-purple-100 text-purple-600 mb-2 border border-purple-200">
+                <MousePointer className="w-5 h-5" />
               </div>
-              <p className="text-xs text-slate-600">
+              <div className="font-black text-xs text-[#451a03] mb-1">Mouse (Mirar)</div>
+              <p className="text-[11px] text-stone-600 leading-tight">
                 Mueve el mouse para apuntar la vista en 360°.
               </p>
-            </div>
+            </CandyCard>
 
-            <div className="p-3 rounded-2xl bg-pink-50 border border-pink-200">
-              <div className="flex items-center gap-2 font-black text-slate-800 text-sm mb-1">
-                <Hand className="w-4 h-4 text-pink-500" />
-                <span>Tecla E / Click</span>
+            <CandyCard variant="cream" className="p-3.5 flex flex-col items-center text-center">
+              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-amber-100 text-amber-700 mb-2 border border-amber-200">
+                <Hand className="w-5 h-5" />
               </div>
-              <p className="text-xs text-slate-600">
-                Interactúa con ingredientes, batidora, horno y mostrador.
+              <div className="font-black text-xs text-[#451a03] mb-1">Tecla [E] / Click</div>
+              <p className="text-[11px] text-stone-600 leading-tight">
+                Interactúa con ingredientes, batidora, horno y clientes.
               </p>
-            </div>
+            </CandyCard>
           </div>
         </div>
 
-        {/* 2. Ciclo de Cocina */}
-        <div className="mb-6">
-          <h3 className="text-sm font-black uppercase tracking-wider text-pink-600 mb-3">
-            2. El Ciclo de Pastelería
-          </h3>
-          <div className="space-y-2 text-xs text-slate-700 bg-amber-50/70 p-4 rounded-2xl border border-amber-200 font-medium leading-relaxed">
-            <div><strong className="text-amber-900">1. Pedido:</strong> Llega un cliente al mostrador con su pedido y paciencia.</div>
-            <div><strong className="text-amber-900">2. Ingredientes:</strong> Junta los ingredientes de la receta en tu bandeja con [E].</div>
-            <div><strong className="text-amber-900">3. Mesa de Mezcla:</strong> Mantén [E] en la batidora hasta soltar en la zona verde.</div>
-            <div><strong className="text-amber-900">4. Horno:</strong> Mete la masa en el horno. ¡Sácala cuando la barra esté verde antes de que se queme!</div>
-            <div><strong className="text-amber-900">5. Decoración:</strong> Si lo requiere, dale el toque final con glaseado y toppings.</div>
-            <div><strong className="text-amber-900">6. Entrega:</strong> Lleva el postre al mostrador y entrega con [E] para ganar dinero y puntos.</div>
+        {/* 2. Ciclo de Pastelería */}
+        <div>
+          <div className="flex items-center gap-2 mb-2.5">
+            <CandyBadge variant="secondary" size="sm">Paso 2</CandyBadge>
+            <h3 className="text-sm font-black uppercase tracking-wider text-[#451a03]">
+              El Ciclo de la Pastelería
+            </h3>
           </div>
+
+          <CandyCard variant="amber" className="p-4 space-y-2 text-xs text-[#451a03] font-medium leading-relaxed">
+            <div><strong className="text-amber-950 font-black">1. Pedido:</strong> Llega un cliente al mostrador con su pedido y paciencia.</div>
+            <div><strong className="text-amber-950 font-black">2. Ingredientes:</strong> Junta los ingredientes de la receta en tu bandeja con [E].</div>
+            <div><strong className="text-amber-950 font-black">3. Mesa de Mezcla:</strong> Mantén [E] en la batidora hasta soltar en la zona verde.</div>
+            <div><strong className="text-amber-950 font-black">4. Horno:</strong> Mete la masa en el horno. ¡Sácala cuando la barra esté verde antes de que se queme!</div>
+            <div><strong className="text-amber-950 font-black">5. Decoración:</strong> Si lo requiere, dale el toque final en la mesa con glaseado y toppings.</div>
+            <div><strong className="text-amber-950 font-black">6. Entrega:</strong> Lleva el postre al mostrador y entrega con [E] para ganar dinero y puntos.</div>
+          </CandyCard>
         </div>
 
         {/* 3. Libro de Recetas */}
-        <div className="mb-4">
-          <h3 className="text-sm font-black uppercase tracking-wider text-pink-600 mb-3">
-            3. Libro de Recetas
-          </h3>
+        <div>
+          <div className="flex items-center gap-2 mb-2.5">
+            <CandyBadge variant="accent" size="sm">Paso 3</CandyBadge>
+            <h3 className="text-sm font-black uppercase tracking-wider text-[#451a03]">
+              Libro de Recetas
+            </h3>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {Object.values(RECIPES).map(rec => (
-              <div
+              <CandyCard
                 key={rec.id}
-                className="flex items-center justify-between p-3 rounded-2xl border border-pink-100 bg-pink-50/40"
+                variant="cream"
+                className="p-3 flex items-center justify-between"
               >
                 <div className="flex items-center gap-2.5">
                   <span className="text-2xl">{rec.emoji}</span>
                   <div>
-                    <div className="text-xs font-black text-slate-800">{rec.name}</div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-xs font-black text-[#451a03]">{rec.name}</div>
+                    <div className="text-[10px] font-semibold text-stone-500 mt-0.5">
                       {rec.ingredients.map(i => INGREDIENTS[i].name).join(' + ')}
                     </div>
                   </div>
                 </div>
-                <span className="text-xs font-black text-pink-600">${rec.price}</span>
-              </div>
+                <CandyBadge variant="warning" size="sm">
+                  ${rec.price}
+                </CandyBadge>
+              </CandyCard>
             ))}
           </div>
         </div>
-
-        <button
-          onClick={onClose}
-          className="w-full mt-4 py-3 rounded-2xl font-black text-sm bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-lg hover:brightness-105 active:scale-95 transition-all"
-        >
-          ¡Entendido, a Cocinar!
-        </button>
       </div>
-    </div>
+    </CandyModal>
   );
 };
