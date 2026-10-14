@@ -333,7 +333,7 @@ export default function GamePage() {
   // 10. BUCLE PRINCIPAL DEL JUEGO (RELOJ, PACIENCIA DE CLIENTES Y HORNO)
   // --------------------------------------------------------------------------
   useEffect(() => {
-    if (screen !== 'playing') return;
+    if (screen !== 'playing' || isPaused) return;
 
     const interval = setInterval(() => {
       // A. Cuenta regresiva del nivel
@@ -827,6 +827,7 @@ export default function GamePage() {
             onPause={() => {
               document.exitPointerLock?.();
               setIsLocked(false);
+              setIsPaused(true);
             }}
             toast={toast}
             mixingProgress={mixingProgress}
@@ -925,6 +926,33 @@ export default function GamePage() {
           upgrades={progress.upgrades}
           onBuyUpgrade={handleBuyUpgrade}
           onClose={() => setShowShop(false)}
+        />
+      )}
+      {isPaused && (
+        <PauseModal
+          isOpen={isPaused}
+          onResume={() => {
+            setIsPaused(false);
+            setTimeout(() => {
+              const canvas = document.querySelector('canvas');
+              canvas?.requestPointerLock?.();
+            }, 150);
+          }}
+          onRetry={() => {
+            setIsPaused(false);
+            startLevel(currentLevelNumber);
+          }}
+          onOpenRecipes={() => {
+            setIsPaused(false);
+            setShowHowToPlay(true);
+          }}
+          onReturnHome={() => {
+            setIsPaused(false);
+            setScreen('home');
+          }}
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
+          levelNumber={currentLevelNumber}
         />
       )}
     </main>
