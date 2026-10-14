@@ -8,9 +8,12 @@ interface CreditsModalProps {
 }
 
 export const CreditsModal: React.FC<CreditsModalProps> = ({ onClose }) => {
+  // ─── NOMBRE DEL INSTITUTO (Fácil de editar) ─────────────────────────────────
+  const NOMBRE_INSTITUTO = 'Instituto Técnico La Falda (ITLF)';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 select-none">
-      <div className="relative flex flex-col items-center max-w-md w-full rounded-3xl border-4 border-pink-300 bg-white/98 p-8 shadow-2xl text-center">
+      <div className="relative flex flex-col items-center max-w-md w-full rounded-3xl border-4 border-pink-300 bg-white/98 p-7 shadow-2xl text-center">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
@@ -19,12 +22,27 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({ onClose }) => {
         </button>
 
         <div className="text-4xl mb-2 animate-bounce">🧁</div>
-        <h2 className="text-2xl font-black text-bakery-choco mb-1">
+        <h2 className="text-2xl font-black text-amber-950 mb-0.5">
           Azúcar Rush
         </h2>
-        <p className="text-xs text-pink-600 font-bold uppercase tracking-wider mb-6">
+        <p className="text-xs text-pink-600 font-bold uppercase tracking-wider mb-4">
           Juego 3D en Primera Persona de Pastelería
         </p>
+
+        {/* Sección destacada del Instituto */}
+        <div className="w-full mb-4 flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-slate-900 to-stone-900 border border-slate-700 shadow-md">
+          <span className="text-[10px] font-bold text-amber-300 tracking-wider uppercase mb-1.5">
+            Proyecto realizado en
+          </span>
+          <img
+            src="/img/logoNav.webp"
+            alt={NOMBRE_INSTITUTO}
+            className="h-9 w-auto object-contain mb-1.5 drop-shadow"
+          />
+          <span className="text-xs font-black text-white">
+            {NOMBRE_INSTITUTO}
+          </span>
+        </div>
 
         <div className="space-y-4 text-xs text-slate-600 mb-8 w-full text-left bg-pink-50/50 p-4 rounded-2xl border border-pink-100">
           <div>

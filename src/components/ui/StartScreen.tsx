@@ -42,23 +42,38 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           style={{ background: 'radial-gradient(circle, rgba(244,114,182,0.08) 0%, transparent 70%)' }} />
       </div>
 
-      {/* Barra superior */}
+      {/* Barra superior con logo del Instituto */}
       <div className="relative w-full max-w-4xl flex items-center justify-between z-10 px-6 pt-6">
-        <div className="flex items-center gap-2 bg-white/80 border border-amber-200 px-4 py-2 rounded-2xl shadow-sm">
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <span className="text-xs font-bold text-stone-600 tracking-wide">
-            Pastelería 3D · Primera Persona
-          </span>
+        {/* Logo del Instituto en la esquina superior izquierda */}
+        <div
+          className="flex items-center gap-2.5 bg-slate-900/85 backdrop-blur-md border border-white/20 px-3.5 py-1.5 rounded-2xl shadow-sm transition-transform hover:scale-105"
+          title="Instituto Técnico La Falda"
+        >
+          <img
+            src="/img/logoNav.webp"
+            alt="Instituto Técnico La Falda"
+            className="h-6 w-auto object-contain"
+          />
         </div>
 
-        <button
-          onClick={onToggleMute}
-          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 border border-amber-200 shadow-sm transition-all hover:bg-amber-50 active:scale-95"
-        >
-          {isMuted
-            ? <VolumeX className="w-5 h-5 text-stone-400" />
-            : <Volume2 className="w-5 h-5 text-amber-600" />}
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 bg-white/80 border border-amber-200 px-4 py-2 rounded-2xl shadow-sm">
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <span className="text-xs font-bold text-stone-600 tracking-wide">
+              Pastelería 3D · Primera Persona
+            </span>
+          </div>
+
+          <button
+            onClick={onToggleMute}
+            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 border border-amber-200 shadow-sm transition-all hover:bg-amber-50 active:scale-95"
+            title={isMuted ? 'Activar Sonido' : 'Silenciar'}
+          >
+            {isMuted
+              ? <VolumeX className="w-5 h-5 text-stone-400" />
+              : <Volume2 className="w-5 h-5 text-amber-600" />}
+          </button>
+        </div>
       </div>
 
       {/* Hero central */}
@@ -151,8 +166,14 @@ export const StartScreen: React.FC<StartScreenProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="relative text-center text-xs font-medium text-stone-400 pb-4 z-10">
-        Azúcar Rush · Next.js + Three.js + React Three Fiber
+      <div className="relative flex flex-col items-center gap-1.5 text-center text-xs font-medium text-stone-400 pb-4 z-10">
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-500 bg-white/70 backdrop-blur-sm px-3.5 py-1 rounded-full border border-amber-200/50 shadow-xs">
+          <span>Proyecto realizado en</span>
+          <span className="font-bold text-stone-700">Instituto Técnico La Falda (ITLF)</span>
+        </div>
+        <div className="text-[10px] text-stone-400">
+          Azúcar Rush · Next.js + Three.js + React Three Fiber
+        </div>
       </div>
     </div>
   );
