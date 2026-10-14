@@ -58,6 +58,7 @@ export default function GamePage() {
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
   // Estados para abrir/cerrar modales
+  const [isPaused, setIsPaused] = useState<boolean>(false);
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
   const [showCredits, setShowCredits] = useState<boolean>(false);
