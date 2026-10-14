@@ -104,12 +104,9 @@ export const StartScreen: React.FC<StartScreenProps> = ({
 
         {/* Porción de Torta (abajo a la derecha) */}
         <div
-          className="absolute bottom-[18%] right-[10%] text-3xl sm:text-4xl opacity-80 drop-shadow-md select-none"
+          className="absolute bottom-[10%] right-[10%] text-3xl sm:text-4xl opacity-80 drop-shadow-md select-none"
           style={{ animation: 'candyFloat3 6.8s ease-in-out infinite 0.8s' }}
         >
-
-
-
         </div>
 
         {/* Chispitas de colores (Sprinkles) */}
