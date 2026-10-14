@@ -15,6 +15,7 @@ import {
   RECIPES,
   TrayState,
   TableState,
+  DEFAULT_PRODUCT_DECORATIONS,
 } from '@/types/game';
 import { LEVELS } from '@/utils/levels';
 import { loadGameProgress, saveGameProgress } from '@/utils/storage';
@@ -31,6 +32,7 @@ import { HowToPlayModal } from '@/components/ui/HowToPlayModal';
 import { CreditsModal } from '@/components/ui/CreditsModal';
 import { ShopModal } from '@/components/ui/ShopModal';
 import { MixerMinigame } from '@/components/ui/MixerMinigame';
+import { DecorationMinigame } from '@/components/ui/DecorationMinigame';
 
 import { LevelSummaryModal } from '@/components/ui/LevelSummaryModal';
 import { GameWinModal } from '@/components/ui/GameWinModal';
@@ -60,6 +62,7 @@ export default function GamePage() {
   const [showCredits, setShowCredits] = useState<boolean>(false);
   const [showShop, setShowShop] = useState<boolean>(false);
   const [isMixerActive, setIsMixerActive] = useState<boolean>(false);
+  const [decoratingRecipe, setDecoratingRecipe] = useState<ProductId | null>(null);
   const [tableState, setTableState] = useState<TableState>({
     productId: null,
     step: 0,
@@ -180,6 +183,13 @@ export default function GamePage() {
       const patiencePerRecipe = Math.round(basePatiencePerRecipe * levelPatienceMultiplier);
       const totalPatience = patiencePerRecipe * orderCount + 20;
 
+      const requestedDecorations: Record<string, string[]> = {};
+      items.forEach(p => {
+        if (RECIPES[p].requiresDecoration) {
+          requestedDecorations[p] = DEFAULT_PRODUCT_DECORATIONS[p] || ['glaze_pink', 'sprinkles'];
+        }
+      });
+
       const order: CustomerOrder = {
         id: `cust-${Date.now()}`,
         customerType: chosenType,
@@ -190,6 +200,7 @@ export default function GamePage() {
         totalPrice,
         maxPatienceSeconds: totalPatience,
         currentPatienceSeconds: totalPatience,
+        requestedDecorations,
         createdAt: Date.now(),
       };
 
@@ -614,76 +625,22 @@ export default function GamePage() {
       return;
     }
 
-    // D. Mesa de Decoración y Elementos
-    const CORRECT_DECORATION: Record<ProductId, string[]> = {
-      cookie: [],
-      pastry: [],
-      cupcake: ['dec_pink', 'dec_sprinkles'],
-      donut: ['dec_pink'],
-      tart: ['dec_strawberries'],
-      cake: ['dec_purple', 'dec_yellow'],
-    };
-
+    // D. Mesa de Decoración (Abre el Minijuego Interactivo)
     if (focusedObject === 'decorating') {
       if (tray.type === 'baked') {
         const rec = RECIPES[tray.recipeId];
         if (rec.requiresDecoration) {
           sounds.playPickup();
-          // Colocar en la mesa
-          setTableState({ productId: tray.recipeId, step: 0, isIncorrect: false });
-          setTray({ type: 'empty' });
-          showToast(`Colocaste ${rec.name} en la mesa. ¡Añade los ingredientes correctos!`, 'info');
+          document.exitPointerLock?.();
+          setIsLocked(false);
+          setDecoratingRecipe(tray.recipeId);
         } else {
-          showToast(`${rec.name} no requiere decoración. ¡Entrégalo al cliente!`, 'info');
-        }
-      } else if (tray.type === 'empty' && tableState.productId) {
-        const reqSteps = CORRECT_DECORATION[tableState.productId].length;
-        if (tableState.step >= reqSteps || tableState.isIncorrect) {
-          // Recoger postre terminado (correcta o incorrectamente decorado)
-          sounds.playPickup();
-          setTray({ type: 'finished', recipeId: tableState.productId });
-          setTableState({ productId: null, step: 0, isIncorrect: false });
-          if (tableState.isIncorrect) {
-            setScore(s => Math.max(0, s - 80));
-            showToast('Decoración incorrecta. El cliente lo notará (-80 pts)', 'warning');
-          } else {
-            showToast(`¡Decoración completa! Listo para entregar.`, 'success');
-          }
-        } else {
-          showToast(`Aún le falta decoración. Usa las mangas o cuencos.`, 'info');
+          showToast(`${rec.name} no requiere decoración. ¡Llévalo al mostrador!`, 'info');
         }
       } else if (tray.type === 'finished') {
         showToast('Ya está decorado. Llévalo al mostrador para entregarlo al cliente [E].', 'info');
       } else {
-        showToast('Trae un postre horneado que requiera decoración (cupcake, donut, tarta, torta).', 'info');
-      }
-      return;
-    }
-
-    if (focusedObject && focusedObject.startsWith('dec_')) {
-      if (!tableState.productId) {
-        showToast('Coloca un postre en la mesa de decoración primero.', 'info');
-        return;
-      }
-      const reqSteps = CORRECT_DECORATION[tableState.productId];
-      if (tableState.isIncorrect || tableState.step >= reqSteps.length) {
-        showToast('El postre ya está terminado, recógelo de la mesa.', 'info');
-        return;
-      }
-      
-      const expectedDecoration = reqSteps[tableState.step];
-      if (focusedObject === expectedDecoration) {
-        sounds.playPickup(); // Idealmente un sonido de glaseado
-        setTableState(prev => ({ ...prev, step: prev.step + 1 }));
-        if (tableState.step + 1 >= reqSteps.length) {
-          showToast('¡Decoración correcta y terminada! Recógelo de la mesa [E].', 'success');
-        } else {
-          showToast(`¡Paso ${tableState.step + 1} correcto! Sigue decorando...`, 'info');
-        }
-      } else {
-        sounds.playError();
-        setTableState(prev => ({ ...prev, isIncorrect: true }));
-        showToast('Te equivocaste de decoración... El postre quedó arruinado.', 'warning');
+        showToast('Trae un postre horneado que requiera decoración (donut, cupcake, tarta, torta).', 'info');
       }
       return;
     }
@@ -699,19 +656,22 @@ export default function GamePage() {
 
           const isFast = currentOrder.currentPatienceSeconds / currentOrder.maxPatienceSeconds > 0.6;
           const isDecorated = tray.type === 'finished';
-          const bonusDecor = isDecorated ? 50 : 0;
-          const pointsEarned = 100 + (isFast ? 50 : 0) + bonusDecor;
-          const revenueEarned = recipe.price;
+          const isIncorrect = tray.type === 'finished' && tray.isIncorrectDecor;
+          const bonusDecor = isDecorated && !isIncorrect ? 60 : isIncorrect ? -40 : 0;
+          const pointsEarned = Math.max(20, 100 + (isFast ? 50 : 0) + bonusDecor);
+          const revenueEarned = isIncorrect ? Math.round(recipe.price * 0.75) : recipe.price;
 
           setMoney(m => m + revenueEarned);
           setScore(s => s + pointsEarned);
           setOrdersDeliveredCount(c => c + 1);
           setTray({ type: 'empty' });
 
-          if (isDecorated || !recipe.requiresDecoration) {
+          if (isIncorrect) {
+            showToast(`${recipe.name} entregado, pero la decoración era incorrecta (-40 pts)`, 'warning');
+          } else if (isDecorated || !recipe.requiresDecoration) {
             showToast(`${recipe.name} entregado con éxito. +$${revenueEarned} (+${pointsEarned} pts)`, 'success');
           } else {
-            showToast(`${recipe.name} entregado. +$${revenueEarned} (Tip: decóralo para +50 pts)`, 'success');
+            showToast(`${recipe.name} entregado sin decorar. +$${revenueEarned} (Tip: decóralo para +60 pts)`, 'info');
           }
 
           const remainingItems = [...currentOrder.items];
@@ -873,7 +833,42 @@ export default function GamePage() {
             difficultyLabel={currentLevelDef.difficultyLabel}
           />
 
-
+          {decoratingRecipe && (
+            <DecorationMinigame
+              productId={decoratingRecipe}
+              requestedDecorations={
+                currentOrder?.requestedDecorations?.[decoratingRecipe] ||
+                DEFAULT_PRODUCT_DECORATIONS[decoratingRecipe] ||
+                ['glaze_pink', 'sprinkles']
+              }
+              onFinish={(applied, isCorrect) => {
+                const rec = RECIPES[decoratingRecipe];
+                setTray({
+                  type: 'finished',
+                  recipeId: decoratingRecipe,
+                  decorations: applied,
+                  isIncorrectDecor: !isCorrect,
+                });
+                setDecoratingRecipe(null);
+                if (isCorrect) {
+                  showToast(`¡${rec.name} decorado a la perfección! Llévalo al mostrador [E]`, 'success');
+                } else {
+                  showToast('Decoración incorrecta. El cliente lo notará al recibirlo.', 'warning');
+                }
+                setTimeout(() => {
+                  const canvas = document.querySelector('canvas');
+                  canvas?.requestPointerLock?.();
+                }, 150);
+              }}
+              onCancel={() => {
+                setDecoratingRecipe(null);
+                setTimeout(() => {
+                  const canvas = document.querySelector('canvas');
+                  canvas?.requestPointerLock?.();
+                }, 150);
+              }}
+            />
+          )}
         </div>
       )}
 

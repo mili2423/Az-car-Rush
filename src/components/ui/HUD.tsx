@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CustomerOrder, INGREDIENTS, ProductId, RECIPES, TrayState } from '@/types/game';
+import { CustomerOrder, INGREDIENTS, ProductId, RECIPES, TrayState, DECORATION_OPTIONS, DEFAULT_PRODUCT_DECORATIONS } from '@/types/game';
 import { Volume2, VolumeX, Heart, Clock, Award, Trash2, BookOpen, X, Sparkles, UtensilsCrossed, Package } from 'lucide-react';
 
 interface HUDProps {
@@ -442,9 +442,18 @@ export const HUD: React.FC<HUDProps> = ({
                         </span>
                       </div>
                       {!isDelivered && (
-                        <span className="text-[10px] text-stone-400 leading-tight ml-6 truncate">
-                          {recipe.ingredients.map(i => INGREDIENTS[i].name).join(' + ')}
-                        </span>
+                        <div className="flex flex-col gap-0.5 ml-6">
+                          <span className="text-[10px] text-stone-400 leading-tight truncate">
+                            {recipe.ingredients.map(i => INGREDIENTS[i].name).join(' + ')}
+                          </span>
+                          {recipe.requiresDecoration && (
+                            <span className="text-[10px] font-black text-pink-600 leading-tight truncate flex items-center gap-1">
+                              🎨 {(currentOrder.requestedDecorations?.[prodId] || DEFAULT_PRODUCT_DECORATIONS[prodId] || [])
+                                .map(dId => DECORATION_OPTIONS.find(o => o.id === dId)?.name || dId)
+                                .join(' + ')}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                     <span className="text-[11px] font-black text-amber-800 shrink-0 ml-2">${recipe.price}</span>

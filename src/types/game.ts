@@ -127,7 +127,7 @@ export type TrayState =
   | { type: 'ingredients'; items: IngredientId[] }     // Ingredientes crudos recolectados
   | { type: 'mixed_dough'; recipeId: ProductId }       // Masa batida lista para el horno
   | { type: 'baked'; recipeId: ProductId }             // Postre horneado (puede requerir decoración)
-  | { type: 'finished'; recipeId: ProductId }          // Postre terminado listo para entregar
+  | { type: 'finished'; recipeId: ProductId; decorations?: string[]; isIncorrectDecor?: boolean } // Postre terminado listo para entregar
   | { type: 'burnt'; recipeId: ProductId };            // Postre quemado (para tirar a la basura)
 
 // ----------------------------------------------------------------------------
@@ -145,8 +145,42 @@ export interface CustomerOrder {
   totalPrice: number;          // Total a pagar al completar el pedido
   maxPatienceSeconds: number;  // Tiempo máximo de paciencia inicial
   currentPatienceSeconds: number; // Tiempo de paciencia restante
+  requestedDecorations?: Record<string, string[]>; // Decoraciones solicitadas por receta
   createdAt: number;
 }
+
+// ----------------------------------------------------------------------------
+// 4.1 CATÁLOGO DE DECORACIONES DISPONIBLES (GOLOSINAS, BORDES Y TOPPINGS)
+// ----------------------------------------------------------------------------
+export interface DecorationOption {
+  id: string;
+  name: string;
+  category: 'base' | 'topping';
+  icon: string;
+  color: string;
+  description: string;
+}
+
+export const DECORATION_OPTIONS: DecorationOption[] = [
+  { id: 'waves',       category: 'base',    name: 'Borde Ondas',        icon: '〰️', color: '#38bdf8', description: 'Ondas suaves de crema celeste' },
+  { id: 'zigzag',      category: 'base',    name: 'Borde Zigzag',       icon: '⚡', color: '#fbbf24', description: 'Borde festoneado zigzag dorado' },
+  { id: 'glaze_pink',  category: 'base',    name: 'Glaseado Rosa',      icon: '🌸', color: '#f472b6', description: 'Glaseado dulce rosa frambuesa' },
+  { id: 'heart',       category: 'topping', name: 'Corazón Rojo',       icon: '❤️', color: '#ef4444', description: 'Corazón dulce de caramelo' },
+  { id: 'smiley',      category: 'topping', name: 'Carita Feliz',       icon: '😊', color: '#f59e0b', description: 'Carita sonriente de azúcar' },
+  { id: 'clover',      category: 'topping', name: 'Trébol Dulce',       icon: '🍀', color: '#22c55e', description: 'Trébol de menta de la suerte' },
+  { id: 'flame',       category: 'topping', name: 'Llama Caramelo',     icon: '🔥', color: '#ea580c', description: 'Vela caramelo brillante' },
+  { id: 'sprinkles',   category: 'topping', name: 'Chispas Colores',    icon: '✨', color: '#a855f7', description: 'Lluvia de chispitas golosineras' },
+  { id: 'strawberry',  category: 'topping', name: 'Frutilla Fresca',    icon: '🍓', color: '#e11d48', description: 'Frutilla silvestre con hojitas' },
+];
+
+export const DEFAULT_PRODUCT_DECORATIONS: Record<ProductId, string[]> = {
+  cookie: [],
+  pastry: [],
+  donut: ['glaze_pink', 'sprinkles'],
+  cupcake: ['waves', 'heart'],
+  tart: ['zigzag', 'strawberry'],
+  cake: ['zigzag', 'flame'],
+};
 
 // ----------------------------------------------------------------------------
 // 5. DEFINICIÓN DE NIVELES
