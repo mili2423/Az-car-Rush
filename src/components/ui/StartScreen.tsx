@@ -104,7 +104,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
 
         {/* Porción de Torta (abajo a la derecha) */}
         <div
-          className="absolute bottom-[10%] right-[10%] text-3xl sm:text-4xl opacity-80 drop-shadow-md select-none"
+          className="absolute bottom-[18%] right-[10%] text-3xl sm:text-4xl opacity-80 drop-shadow-md select-none"
           style={{ animation: 'candyFloat3 6.8s ease-in-out infinite 0.8s' }}
         >
         </div>
@@ -146,18 +146,20 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             alt="Instituto Técnico La Falda"
             className="h-6 sm:h-7 w-auto object-contain"
           />
-          <button
-            onClick={onToggleMute}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/90 border-2 border-amber-300 shadow-md transition-all hover:bg-amber-50 hover:scale-105 active:scale-95"
-            title={isMuted ? 'Activar Sonido' : 'Silenciar'}
-          >
-            {isMuted ? (
-              <VolumeX className="w-5 h-5 text-stone-400" />
-            ) : (
-              <Volume2 className="w-5 h-5 text-amber-600" />
-            )}
-          </button>
         </div>
+
+        {/* Botón de Silencio */}
+        <button
+          onClick={onToggleMute}
+          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/90 border-2 border-amber-300 shadow-md transition-all hover:bg-amber-50 hover:scale-105 active:scale-95"
+          title={isMuted ? 'Activar Sonido' : 'Silenciar'}
+        >
+          {isMuted ? (
+            <VolumeX className="w-5 h-5 text-stone-400" />
+          ) : (
+            <Volume2 className="w-5 h-5 text-amber-600" />
+          )}
+        </button>
       </header>
 
       {/* ============================================================== */}
@@ -186,7 +188,9 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         <div className="mb-3">
           {/* Cartelito superior */}
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-pink-100 border border-pink-300 text-[11px] font-black tracking-widest uppercase text-pink-700 shadow-xs mb-1.5">
-
+            <span>🧁</span>
+            <span>Pastelería & Cafetería</span>
+            <span>🍰</span>
           </div>
 
           {/* Palabra 1: AZÚCAR */}
