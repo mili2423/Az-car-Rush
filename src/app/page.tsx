@@ -265,20 +265,18 @@ export default function GamePage() {
       return '4. Espera a que suene la campana en el horno...';
     }
     if (tray.type === 'baked') {
-      const rec = RECIPES[tray.recipeId];
-      if (rec?.requiresDecoration) {
-        return '5. Ve a la mesa de decoración y presiona [E] para decorarlo';
-      }
-      return '6. Ve al mostrador frente al cliente y presiona [E] para entregar';
+      // El panel "EN TUS MANOS" ya indica si llevar a Decoración o al Mostrador
+      return undefined;
     }
     if (tray.type === 'finished') {
-      return '6. Ve al mostrador frente al cliente y presiona [E] para entregar el pedido';
+      // El panel "EN TUS MANOS" ya indica que está listo para entregar
+      return undefined;
     }
     if (tray.type === 'burnt') {
       return 'El postre se quemó. Ve al tacho de basura y presiona [E] para vaciarlo';
     }
-    return currentLevelDef.tutorialSteps?.[0];
-  }, [currentLevelNumber, currentOrder, tray, ovenState, currentLevelDef]);
+    return undefined;
+  }, [currentLevelNumber, currentOrder, tray, ovenState]);
 
   // --------------------------------------------------------------------------
   // 9. FLUJO DE INICIO Y TUTORIAL (A PARTIR DEL DÍA 2 NO SE MUESTRA)
@@ -834,6 +832,7 @@ export default function GamePage() {
             focusedObject={focusedObject}
             walkSpeedBonus={(progress.upgrades.fasterWalkSpeed || 0) * 0.15}
             tray={tray}
+            tableState={tableState}
             onFocusChange={setFocusedObject}
             onInteract={handleInteract}
             isLocked={isLocked}

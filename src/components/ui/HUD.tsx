@@ -353,14 +353,11 @@ export const HUD: React.FC<HUDProps> = ({
         </div>
       </div>
 
-      {/* ================================================================ */}
-      {/* 2. ZONA CENTRAL DESPEJADA: Solo avisos efímeros no invasivos      */}
-      {/* ================================================================ */}
-      <div className="flex flex-col items-center gap-2 pointer-events-none">
-        {/* Pastilla no invasiva del tutorial: se ubica arriba y se desvanece sola */}
-        {visibleTutorial && !toast && (
+      {/* Pastilla no invasiva del tutorial: anclada en la parte superior, sin tapar el centro */}
+      {visibleTutorial && !toast && (
+        <div className="pointer-events-none fixed top-16 left-1/2 -translate-x-1/2 z-30 max-w-md w-full px-4 flex justify-center">
           <div
-            className="transition-opacity duration-500 max-w-md px-4 py-1.5 rounded-full text-center flex items-center gap-2 shadow-md"
+            className="transition-opacity duration-500 px-4 py-1.5 rounded-full text-center flex items-center gap-2 shadow-md"
             style={{
               opacity: tutorialOpacity,
               background: 'rgba(255, 251, 235, 0.96)',
@@ -373,7 +370,13 @@ export const HUD: React.FC<HUDProps> = ({
               {visibleTutorial}
             </div>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* 2. ZONA CENTRAL: Libre de textos flotantes                       */}
+      {/* ================================================================ */}
+      <div className="flex flex-col items-center gap-2 pointer-events-none">
 
 
         {/* Barra de progreso de la batidora */}
