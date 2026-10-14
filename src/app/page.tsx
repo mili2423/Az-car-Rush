@@ -20,6 +20,7 @@ import {
 import { LEVELS } from '@/utils/levels';
 import { loadGameProgress, saveGameProgress } from '@/utils/storage';
 import { sounds } from '@/utils/audio';
+import { requestGamePointerLock, releaseGamePointerLock, isPointerLocked } from '@/utils/mouseManager';
 
 // ============================================================================
 // COMPONENTES DE INTERFAZ 2D (HUD, Modales, Pantallas y Menús)
@@ -244,10 +245,7 @@ export default function GamePage() {
       setScreen('playing');
       sounds.startBGM();
 
-      setTimeout(() => {
-        const canvas = document.querySelector('canvas');
-        canvas?.requestPointerLock?.();
-      }, 200);
+      requestGamePointerLock();
     },
     [progress.upgrades, spawnCustomer]
   );
@@ -337,9 +335,7 @@ export default function GamePage() {
     sounds.stopBGM();
 
     // 2. Liberar el control del mouse (pointer lock) y restaurar cursor normal
-    if (document.pointerLockElement) {
-      document.exitPointerLock?.();
-    }
+    releaseGamePointerLock();
     setIsLocked(false);
     setIsPaused(false);
 
@@ -375,34 +371,46 @@ export default function GamePage() {
   }, []);
 
   // --------------------------------------------------------------------------
-  // 9c. CONTROL DE TECLA ESC Y PAUSA AUTOMÁTICA AL SOLTAR POINTER LOCK
+  // 9c. ESTADO ÚNICO CENTRALIZADO: "EN MENÚ" vs "JUGANDO"
   // --------------------------------------------------------------------------
+  const isMenuOpen =
+    screen !== 'playing' ||
+    isPaused ||
+    showTutorial ||
+    showHowToPlay ||
+    showCredits ||
+    showShop ||
+    decoratingRecipe !== null;
+
+  // Si estamos en menú, asegurar puntero liberado inmediatamente
+  useEffect(() => {
+    if (isMenuOpen) {
+      releaseGamePointerLock();
+      setIsLocked(false);
+    }
+  }, [isMenuOpen]);
+
+  // Sincronización de eventos de Pointer Lock y tecla ESC
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (screen === 'playing' && !isPaused) {
-          // Solo si no hay un minijuego o modal abierto
-          if (!decoratingRecipe && !showTutorial && !showHowToPlay && !showShop && !showCredits) {
-            e.preventDefault();
-            if (document.pointerLockElement) {
-              document.exitPointerLock?.();
-            }
-            setIsLocked(false);
-            setIsPaused(true);
-          }
+        // Si está en juego activo (sin menú abierto), pausar
+        if (screen === 'playing' && !isMenuOpen) {
+          e.preventDefault();
+          releaseGamePointerLock();
+          setIsLocked(false);
+          setIsPaused(true);
         }
       }
     };
 
     const handlePointerLockChange = () => {
-      const isLockedNow = document.pointerLockElement !== null;
+      const isLockedNow = isPointerLocked();
       setIsLocked(isLockedNow);
 
-      // Si el puntero se desbloqueó mientras se jugaba y no hay otro modal abierto, pausar
-      if (!isLockedNow && screen === 'playing') {
-        if (!decoratingRecipe && !showTutorial && !showHowToPlay && !showShop && !showCredits) {
-          setIsPaused(prev => (prev ? prev : true));
-        }
+      // Si el navegador liberó el lock (ej. el jugador apretó ESC) y estábamos jugando, pausar
+      if (!isLockedNow && screen === 'playing' && !isMenuOpen) {
+        setIsPaused(true);
       }
     };
 
@@ -413,7 +421,7 @@ export default function GamePage() {
       window.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('pointerlockchange', handlePointerLockChange);
     };
-  }, [screen, isPaused, decoratingRecipe, showTutorial, showHowToPlay, showShop, showCredits]);
+  }, [screen, isMenuOpen]);
 
   // --------------------------------------------------------------------------
   // 10. BUCLE PRINCIPAL DEL JUEGO (RELOJ, PACIENCIA DE CLIENTES Y HORNO)
@@ -719,7 +727,7 @@ export default function GamePage() {
         const rec = RECIPES[tray.recipeId];
         if (rec.requiresDecoration) {
           sounds.playPickup();
-          document.exitPointerLock?.();
+          releaseGamePointerLock();
           setIsLocked(false);
           setDecoratingRecipe(tray.recipeId);
         } else {
@@ -885,7 +893,7 @@ export default function GamePage() {
             onInteract={handleInteract}
             isLocked={isLocked}
             setIsLocked={setIsLocked}
-            isPaused={isPaused}
+            isMenuOpen={isMenuOpen}
           />
 
           <Crosshair
@@ -912,7 +920,7 @@ export default function GamePage() {
             isMuted={isMuted}
             onToggleMute={toggleMute}
             onPause={() => {
-              document.exitPointerLock?.();
+              releaseGamePointerLock();
               setIsLocked(false);
               setIsPaused(true);
             }}
@@ -945,17 +953,11 @@ export default function GamePage() {
                 } else {
                   showToast('Decoración incorrecta. El cliente lo notará al recibirlo.', 'warning');
                 }
-                setTimeout(() => {
-                  const canvas = document.querySelector('canvas');
-                  canvas?.requestPointerLock?.();
-                }, 150);
+                requestGamePointerLock();
               }}
               onCancel={() => {
                 setDecoratingRecipe(null);
-                setTimeout(() => {
-                  const canvas = document.querySelector('canvas');
-                  canvas?.requestPointerLock?.();
-                }, 150);
+                requestGamePointerLock();
               }}
             />
           )}
@@ -1020,10 +1022,7 @@ export default function GamePage() {
           isOpen={isPaused}
           onResume={() => {
             setIsPaused(false);
-            setTimeout(() => {
-              const canvas = document.querySelector('canvas');
-              canvas?.requestPointerLock?.();
-            }, 150);
+            requestGamePointerLock();
           }}
           onRetry={() => {
             setIsPaused(false);

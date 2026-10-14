@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
-import { PointerLockControls } from '@react-three/drei';
+import { PointerLockControls as ThreePointerLockControls } from 'three-stdlib';
 import { Vector3, Vector2, Raycaster, Object3D } from 'three';
 import { sounds } from '@/utils/audio';
 
@@ -11,6 +11,7 @@ interface PlayerControllerProps {
   isLocked: boolean;
   setIsLocked: (locked: boolean) => void;
   onMoveChange: (isMoving: boolean) => void;
+  enabled?: boolean;
 }
 
 export const PlayerController: React.FC<PlayerControllerProps> = ({
@@ -20,13 +21,15 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
   isLocked,
   setIsLocked,
   onMoveChange,
+  enabled = true,
 }) => {
-  const { camera, scene } = useThree();
+  const { camera, scene, gl } = useThree();
   const moveState = useRef({ forward: false, backward: false, left: false, right: false });
   const raycaster = useRef(new Raycaster());
   const lastStepTime = useRef(0);
   const wasMovingRef = useRef(false);
   const justLockedTime = useRef(0);
+  const controlsRef = useRef<ThreePointerLockControls | null>(null);
 
   // Initial camera position & view
   useEffect(() => {
@@ -34,19 +37,49 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
     camera.lookAt(0, 1.7, -4); // Facing back counters
   }, [camera]);
 
-  // Track lock events to prevent immediate click interaction on the lock frame
-  const handleLock = () => {
-    justLockedTime.current = performance.now();
-    setIsLocked(true);
-  };
+  // Controles de puntero nativos de Three.js (SIN listener global en document)
+  useEffect(() => {
+    if (!enabled) {
+      if (controlsRef.current) {
+        controlsRef.current.disconnect();
+        controlsRef.current.dispose();
+        controlsRef.current = null;
+      }
+      setIsLocked(false);
+      onMoveChange(false);
+      return;
+    }
 
-  const handleUnlock = () => {
-    setIsLocked(false);
-    onMoveChange(false);
-  };
+    const controls = new ThreePointerLockControls(camera, gl.domElement);
+    controlsRef.current = controls;
+
+    const onLock = () => {
+      justLockedTime.current = performance.now();
+      setIsLocked(true);
+    };
+
+    const onUnlock = () => {
+      setIsLocked(false);
+      onMoveChange(false);
+    };
+
+    controls.addEventListener('lock', onLock);
+    controls.addEventListener('unlock', onUnlock);
+    controls.connect(gl.domElement);
+
+    return () => {
+      controls.removeEventListener('lock', onLock);
+      controls.removeEventListener('unlock', onUnlock);
+      controls.disconnect();
+      controls.dispose();
+      controlsRef.current = null;
+    };
+  }, [enabled, camera, gl.domElement, setIsLocked, onMoveChange]);
 
   // Keyboard and mouse interaction listeners
   useEffect(() => {
+    if (!enabled) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.code) {
         case 'KeyW':
@@ -84,19 +117,17 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
           moveState.current.backward = false;
           break;
         case 'KeyA':
-        case 'ArrowLeft':
           moveState.current.left = false;
           break;
         case 'KeyD':
-        case 'ArrowRight':
           moveState.current.right = false;
           break;
       }
     };
 
     const handleMouseDown = (e: MouseEvent) => {
-      // Left click interacts only if locked and not the click that just acquired lock
-      if (isLocked && e.button === 0) {
+      // Left click interacts only if locked and enabled and not the initial lock click
+      if (isLocked && enabled && e.button === 0) {
         if (performance.now() - justLockedTime.current > 150) {
           onInteract();
         }
@@ -112,11 +143,11 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('mousedown', handleMouseDown);
     };
-  }, [isLocked, onInteract]);
+  }, [enabled, isLocked, onInteract]);
 
   // Movement & Raycasting frame loop
   useFrame((_, delta) => {
-    if (!isLocked) return;
+    if (!enabled || !isLocked) return;
 
     const baseSpeed = 4.8 * (1 + walkSpeedBonus);
     const speed = baseSpeed * Math.min(delta, 0.08);
@@ -184,7 +215,7 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
       camera.position.x = validX;
       camera.position.z = validZ;
 
-      // Subtle footstep sound
+      // Footstep sound
       const now = performance.now();
       if (now - lastStepTime.current > 330) {
         sounds.playFootstep();
@@ -229,10 +260,5 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
     onFocusChange(hitInteractable);
   });
 
-  return (
-    <PointerLockControls
-      onLock={handleLock}
-      onUnlock={handleUnlock}
-    />
-  );
+  return null;
 };

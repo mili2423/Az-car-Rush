@@ -61,6 +61,18 @@ export const CandyButton: React.FC<CandyButtonProps> = ({
       disabled={disabled}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${widthClass} ${className}`}
       {...props}
+      onClick={(e) => {
+        e.stopPropagation();
+        props.onClick?.(e);
+      }}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        props.onPointerDown?.(e);
+      }}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        props.onMouseDown?.(e);
+      }}
     >
       {/* Gloss overlay for primary & danger buttons */}
       {(variant === 'primary' || variant === 'danger') && (

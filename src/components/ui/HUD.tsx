@@ -298,7 +298,10 @@ export const HUD: React.FC<HUDProps> = ({
           {/* Botones de acción compactos con Candy styling */}
           <div className="pointer-events-auto flex items-center gap-1 px-1.5 py-1">
             <button
-              onClick={() => setShowRecipesModal(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowRecipesModal(true);
+              }}
               className="flex items-center gap-1 px-2 py-1 text-xs font-black text-amber-900 hover:bg-amber-100 rounded-full transition-all active:scale-95 border border-transparent hover:border-amber-200"
               title="Libro de Recetas"
             >
@@ -308,7 +311,10 @@ export const HUD: React.FC<HUDProps> = ({
 
             {onOpenTutorial && (
               <button
-                onClick={onOpenTutorial}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenTutorial();
+                }}
                 className="flex items-center gap-1 px-2 py-1 text-xs font-black text-purple-900 hover:bg-purple-100 rounded-full transition-all active:scale-95 border border-transparent hover:border-purple-200"
                 title="Repasar Tutorial"
               >
@@ -318,7 +324,10 @@ export const HUD: React.FC<HUDProps> = ({
             )}
 
             <button
-              onClick={onToggleMute}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleMute();
+              }}
               className="flex h-7 w-7 items-center justify-center text-stone-600 hover:bg-pink-100 rounded-full transition-all active:scale-95 shrink-0"
               title={isMuted ? 'Activar Sonido' : 'Silenciar'}
             >
@@ -330,7 +339,10 @@ export const HUD: React.FC<HUDProps> = ({
             </button>
 
             <button
-              onClick={onPause}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPause();
+              }}
               className="flex h-7 px-2.5 items-center justify-center text-[10px] font-black text-white bg-gradient-to-r from-pink-500 to-rose-500 rounded-full transition-all shadow-[0_2px_0_#9d174d] active:translate-y-0.5 active:shadow-none"
               title="Pausar juego"
             >
@@ -475,7 +487,10 @@ export const HUD: React.FC<HUDProps> = ({
             </span>
             {tray.type !== 'empty' && (
               <button
-                onClick={onClearTray}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClearTray();
+                }}
                 className="flex items-center gap-1 text-[10px] font-black text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-full transition-colors border border-rose-200 active:scale-95"
               >
                 <Trash2 className="w-3 h-3" />

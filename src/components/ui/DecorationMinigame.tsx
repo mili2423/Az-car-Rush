@@ -9,6 +9,7 @@ import { Product3DItem } from '@/components/3d/HeldItem3D';
 import { sounds } from '@/utils/audio';
 import { X, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { CandyCard, CandyBadge, CandyButton } from '@/components/ui/design-system';
+import { releaseGamePointerLock } from '@/utils/mouseManager';
 
 interface DecorationMinigameProps {
   productId: ProductId;
@@ -70,6 +71,11 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
 
   const totalSteps = requestedDecorations.length > 0 ? requestedDecorations.length : 2;
 
+  // Liberar el cursor inmediatamente al montar el minijuego
+  useEffect(() => {
+    releaseGamePointerLock();
+  }, []);
+
   // Manejar tecla Escape para cancelar
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -120,7 +126,12 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-between items-center bg-slate-950/75 backdrop-blur-md select-none p-3 sm:p-5">
+    <div
+      className="fixed inset-0 z-50 flex flex-col justify-between items-center bg-slate-950/75 backdrop-blur-md select-none p-3 sm:p-5"
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       {/* ============================================================== */}
       {/* 1. HEADER: Tarjeta de Pedido del Cliente                       */}
       {/* ============================================================== */}
@@ -181,7 +192,10 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
 
         {/* Botón cancelar */}
         <button
-          onClick={onCancel}
+          onClick={(e) => {
+            e.stopPropagation();
+            onCancel();
+          }}
           className="p-2 rounded-full text-stone-400 hover:text-pink-600 hover:bg-pink-100 transition-colors"
           title="Cancelar decoración (Esc)"
         >
@@ -267,7 +281,10 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
             return (
               <button
                 key={opt.id}
-                onClick={() => handleSelectDecoration(opt)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelectDecoration(opt);
+                }}
                 disabled={isCompleted}
                 className="group flex flex-col items-center justify-center p-2 rounded-2xl w-full h-[72px] sm:h-[76px] transition-all hover:scale-105 active:scale-95 disabled:opacity-45 select-none shadow-[0_3px_0_rgba(0,0,0,0.1)] active:translate-y-0.5 active:shadow-none"
                 style={{

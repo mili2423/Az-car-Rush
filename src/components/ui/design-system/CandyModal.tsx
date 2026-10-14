@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { releaseGamePointerLock } from '@/utils/mouseManager';
 
 export interface CandyModalProps {
   isOpen?: boolean;
@@ -26,6 +27,13 @@ export const CandyModal: React.FC<CandyModalProps> = ({
   footer,
   showCloseButton = true,
 }) => {
+  // Asegurar cursor libre al abrir cualquier modal
+  useEffect(() => {
+    if (isOpen) {
+      releaseGamePointerLock();
+    }
+  }, [isOpen]);
+
   // ESC key to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,12 +56,17 @@ export const CandyModal: React.FC<CandyModalProps> = ({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm select-none overflow-y-auto"
       onClick={e => {
+        e.stopPropagation();
         if (e.target === e.currentTarget) onClose();
       }}
+      onPointerDown={e => e.stopPropagation()}
+      onMouseDown={e => e.stopPropagation()}
     >
       <div
         className={`relative flex flex-col w-full ${maxWidthClasses[maxWidth]} my-auto max-h-[90vh] rounded-3xl border-4 border-pink-300 bg-[#fffbf7] shadow-2xl p-6 sm:p-7 text-[#451a03] animate-scale-in`}
         onClick={e => e.stopPropagation()}
+        onPointerDown={e => e.stopPropagation()}
+        onMouseDown={e => e.stopPropagation()}
       >
         {/* Top gloss strip */}
         <div className="absolute top-0 left-6 right-6 h-1.5 bg-gradient-to-r from-pink-400 via-purple-400 to-amber-300 rounded-b-full pointer-events-none" />
