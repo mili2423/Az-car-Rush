@@ -168,7 +168,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
       <main className="relative flex flex-col items-center text-center max-w-lg w-full z-10 px-5 my-auto py-4">
 
         {/* Gorro de Chef con aureola de brillo */}
-        <div className="relative mb-3 group cursor-default">
+        <div className="relative mb-4 group cursor-default">
           <div
             className="h-20 w-20 sm:h-24 sm:w-24 rounded-[30px] border-4 border-white shadow-2xl flex items-center justify-center transition-transform hover:rotate-6 hover:scale-105"
             style={{
@@ -186,13 +186,6 @@ export const StartScreen: React.FC<StartScreenProps> = ({
 
         {/* Título Estilo Cartel de Pastelería Golosinera */}
         <div className="mb-3">
-          {/* Cartelito superior */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-pink-100 border border-pink-300 text-[11px] font-black tracking-widest uppercase text-pink-700 shadow-xs mb-1.5">
-            <span>🧁</span>
-            <span>Pastelería & Cafetería</span>
-            <span>🍰</span>
-          </div>
-
           {/* Palabra 1: AZÚCAR */}
           <h1
             className="text-6xl sm:text-7xl md:text-8xl font-black tracking-tight leading-none"
