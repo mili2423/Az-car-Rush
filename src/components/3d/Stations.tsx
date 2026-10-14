@@ -4,6 +4,14 @@ import { Group, PointLight } from 'three';
 import { RoundedBox } from '@react-three/drei';
 import { OvenState, TableState } from '@/types/game';
 import { Product3DItem } from './HeldItem3D';
+import {
+  Flour3D,
+  Egg3D,
+  Milk3D,
+  Sugar3D,
+  Chocolate3D,
+  Strawberry3D,
+} from './Ingredient3D';
 
 interface StationsProps {
   ovenState: OvenState;
@@ -123,184 +131,173 @@ export const Stations: React.FC<StationsProps> = ({
           ))}
         </group>
 
-        {/* 1.1 HARINA (Saco rústico abombado con doblez y cuerda) */}
-        <group position={[0.2, 1.3, -1.5]} name="flour">
-          {/* Cuerpo principal redondeado del saco */}
-          <mesh castShadow scale={[1, 1.25, 0.95]}>
-            <sphereGeometry args={[0.26, 16, 16]} />
-            <meshStandardMaterial
-              color={focusedObject === 'flour' ? '#fef08a' : '#fef9c3'}
-              roughness={0.8}
-            />
+        {/* 1.1 HARINA (Saco rústico de papel kraft con cuerda, nudo, harina asomando y sello) */}
+        <group position={[0.2, 1.05, -1.5]} name="flour">
+          {/* Saco principal */}
+          <group position={[0, 0.18, 0]} scale={[2.3, 2.3, 2.3]}>
+            <Flour3D isFocused={focusedObject === 'flour'} />
+          </group>
+          {/* Saquito acompañante más pequeño al lado */}
+          <group position={[-0.14, 0.14, 0.22]} rotation={[0, 0.4, 0]} scale={[1.7, 1.7, 1.7]}>
+            <Flour3D isFocused={focusedObject === 'flour'} />
+          </group>
+          {/* Polvillo de harina esparcido suave en la mesada */}
+          <mesh position={[-0.05, 0.01, 0.05]} rotation={[-Math.PI / 2, 0, 0]}>
+            <circleGeometry args={[0.28, 16]} />
+            <meshStandardMaterial color="#ffffff" roughness={0.95} transparent opacity={0.45} />
           </mesh>
-          {/* Pliegues de la boca del saco */}
-          <mesh position={[0, 0.28, 0]}>
-            <torusGeometry args={[0.16, 0.06, 8, 16]} />
-            <meshStandardMaterial
-              color={focusedObject === 'flour' ? '#fef08a' : '#fef08a'}
-              roughness={0.8}
-            />
-          </mesh>
-          {/* Cuerda / lazo de cáñamo */}
-          <mesh position={[0, 0.22, 0]}>
-            <torusGeometry args={[0.14, 0.02, 6, 16]} />
-            <meshStandardMaterial color="#b45309" roughness={0.9} />
-          </mesh>
-          {/* Sello de trigo rosa */}
-          <mesh position={[0.22, -0.02, 0]} rotation={[0, Math.PI / 2, 0]}>
-            <circleGeometry args={[0.1, 12]} />
-            <meshStandardMaterial color="#ec4899" roughness={0.5} />
+          {/* Hit box para interacción cómoda y precisa */}
+          <mesh visible={false} position={[0, 0.25, 0]}>
+            <boxGeometry args={[0.55, 0.55, 0.65]} />
+            <meshBasicMaterial />
           </mesh>
         </group>
 
-        {/* 1.2 HUEVO (Huevera moldeada con esquinas curvas y huevos reales) */}
-        <group position={[0.2, 1.14, -0.7]} name="egg">
+        {/* 1.2 HUEVO (Huevera artesanal con huevos de cáscara suave, brillo y forma ovalada real) */}
+        <group position={[0.2, 1.05, -0.7]} name="egg">
+          {/* Bandeja huevera de cartón moldeado */}
           <RoundedBox
-            args={[0.48, 0.16, 0.38]}
-            radius={0.04}
+            args={[0.48, 0.09, 0.36]}
+            radius={0.03}
             smoothness={3}
+            position={[0, 0.05, 0]}
             castShadow
           >
             <meshStandardMaterial
               color={focusedObject === 'egg' ? '#fef08a' : '#f59e0b'}
-              roughness={0.6}
+              roughness={0.7}
             />
           </RoundedBox>
-          {/* Tapa abierta inclinada */}
-          <mesh position={[-0.04, 0.2, -0.18]} rotation={[-0.4, 0, 0]}>
-            <boxGeometry args={[0.46, 0.12, 0.03]} />
-            <meshStandardMaterial color="#d97706" roughness={0.6} />
+          {/* Tapa abierta inclinada hacia atrás */}
+          <mesh position={[-0.05, 0.18, -0.18]} rotation={[-0.45, 0, 0]}>
+            <boxGeometry args={[0.46, 0.16, 0.02]} />
+            <meshStandardMaterial color="#d97706" roughness={0.7} />
           </mesh>
-          {/* Alvéolos con huevos de cascarón suave */}
-          {[-0.12, 0.12].map(x =>
-            [-0.08, 0.08].map(z => (
-              <mesh key={`egg-${x}-${z}`} position={[x, 0.12, z]} scale={[1, 1.2, 1]}>
-                <sphereGeometry args={[0.075, 12, 12]} />
-                <meshStandardMaterial color="#fffbeb" roughness={0.3} />
-              </mesh>
-            ))
-          )}
-        </group>
-
-        {/* 1.3 LECHE (Botella vintage de cristal con cuello curvado y relieve) */}
-        <group position={[0.2, 1.32, 0.1]} name="milk">
-          {/* Cuerpo cilíndrico de base redondeada */}
-          <mesh castShadow>
-            <cylinderGeometry args={[0.13, 0.15, 0.34, 16]} />
-            <meshStandardMaterial
-              color={focusedObject === 'milk' ? '#fef08a' : '#f8fafc'}
-              roughness={0.2}
-            />
-          </mesh>
-          {/* Cuello abombado estilizado */}
-          <mesh position={[0, 0.22, 0]} scale={[1, 0.7, 1]}>
-            <sphereGeometry args={[0.12, 14, 14]} />
-            <meshStandardMaterial color="#ffffff" roughness={0.2} />
-          </mesh>
-          <mesh position={[0, 0.31, 0]}>
-            <cylinderGeometry args={[0.065, 0.065, 0.12, 12]} />
-            <meshStandardMaterial color="#ffffff" roughness={0.2} />
-          </mesh>
-          {/* Tapa celeste pastel */}
-          <mesh position={[0, 0.38, 0]}>
-            <cylinderGeometry args={[0.08, 0.08, 0.04, 12]} />
-            <meshStandardMaterial color="#38bdf8" roughness={0.3} />
-          </mesh>
-          {/* Etiqueta decorativa con vaca/leche */}
-          <mesh position={[0, -0.02, 0]}>
-            <cylinderGeometry args={[0.152, 0.152, 0.14, 16]} />
-            <meshStandardMaterial color="#bae6fd" roughness={0.4} />
-          </mesh>
-        </group>
-
-        {/* 1.4 AZÚCAR (Azucarero de cerámica esférico con tapa abombada) */}
-        <group position={[0.2, 1.28, 0.8]} name="sugar">
-          {/* Vasija globular de porcelana */}
-          <mesh castShadow scale={[1.1, 0.95, 1.1]}>
-            <sphereGeometry args={[0.2, 16, 16]} />
-            <meshStandardMaterial
-              color={focusedObject === 'sugar' ? '#fef08a' : '#fff5f7'}
-              roughness={0.2}
-            />
-          </mesh>
-          {/* Tapa acanalada rosa pastel */}
-          <mesh position={[0, 0.18, 0]}>
-            <cylinderGeometry args={[0.17, 0.19, 0.05, 16]} />
-            <meshStandardMaterial color="#f472b6" roughness={0.3} />
-          </mesh>
-          {/* Perilla superior esférica dorada */}
-          <mesh position={[0, 0.24, 0]}>
-            <sphereGeometry args={[0.045, 10, 10]} />
-            <meshStandardMaterial color="#fbbf24" metalness={0.8} roughness={0.2} />
-          </mesh>
-          {/* Cuchara de porcelana que asoma coqueta */}
-          <mesh position={[0.1, 0.18, 0.1]} rotation={[0.4, 0, -0.5]}>
-            <cylinderGeometry args={[0.015, 0.015, 0.22, 8]} />
-            <meshStandardMaterial color="#ffffff" roughness={0.3} />
-          </mesh>
-        </group>
-
-        {/* 1.5 CHOCOLATE (Tableta con onzas 3D en relieve y envoltorio dorado) */}
-        <group position={[0.2, 1.12, 1.4]} name="chocolate">
-          {/* Tableta base con bordes suavizados */}
-          <RoundedBox args={[0.34, 0.08, 0.52]} radius={0.02} smoothness={3} castShadow rotation={[0, 0.2, 0]}>
-            <meshStandardMaterial
-              color={focusedObject === 'chocolate' ? '#fef08a' : '#451a03'}
-              roughness={0.35}
-            />
-          </RoundedBox>
-          {/* Onzas individuales en relieve */}
-          {[-0.08, 0.08].map(ox =>
-            [-0.14, 0, 0.14].map(oz => (
-              <RoundedBox
-                key={`choc-${ox}-${oz}`}
-                args={[0.12, 0.03, 0.11]}
-                radius={0.015}
-                smoothness={2}
-                position={[ox, 0.05, oz]}
-                rotation={[0, 0.2, 0]}
+          {/* Huevos individuales con forma orgánica en 2x3 */}
+          {[-0.13, 0, 0.13].map((z, zi) =>
+            [-0.12, 0.12].map((x, xi) => (
+              <group
+                key={`egg-shelf-${xi}-${zi}`}
+                position={[x, 0.07, z]}
+                rotation={[0.08 * (xi === 0 ? -1 : 1), (xi + zi) * 0.3, 0.06 * (zi - 1)]}
+                scale={[1.75, 1.75, 1.75]}
               >
-                <meshStandardMaterial color="#381502" roughness={0.3} />
-              </RoundedBox>
+                <Egg3D isFocused={focusedObject === 'egg'} />
+              </group>
             ))
           )}
-          {/* Envoltorio de papel metalizado dorado doblado */}
-          <mesh position={[0, 0.01, 0.14]} rotation={[0, 0.2, 0]}>
-            <boxGeometry args={[0.355, 0.085, 0.26]} />
-            <meshStandardMaterial color="#fbbf24" metalness={0.85} roughness={0.25} />
+          {/* Hit box para interacción cómoda */}
+          <mesh visible={false} position={[0, 0.18, 0]}>
+            <boxGeometry args={[0.55, 0.45, 0.45]} />
+            <meshBasicMaterial />
           </mesh>
         </group>
 
-        {/* 1.6 FRUTILLA (Canasta de mimbre con asa arqueada y frutillas con cáliz verde) */}
-        <group position={[0.2, 2.36, 0]} name="strawberry">
-          {/* Cesta redondeada con curvatura suave */}
-          <RoundedBox args={[0.44, 0.22, 0.64]} radius={0.04} smoothness={3} castShadow>
+        {/* 1.3 LECHE (Botellas lecheras vintage con cuello esbelto, tapa celeste y etiqueta) */}
+        <group position={[0.2, 1.05, 0.1]} name="milk">
+          {/* Base / posavasos rústico de madera */}
+          <RoundedBox args={[0.38, 0.03, 0.38]} radius={0.02} smoothness={2} position={[0, 0.02, 0]}>
+            <meshStandardMaterial color="#78350f" roughness={0.6} />
+          </RoundedBox>
+          {/* Botella principal */}
+          <group position={[0.04, 0.03, -0.06]} scale={[2.3, 2.3, 2.3]}>
+            <Milk3D isFocused={focusedObject === 'milk'} />
+          </group>
+          {/* Segunda botella compañera */}
+          <group position={[-0.08, 0.03, 0.08]} rotation={[0, 0.8, 0]} scale={[2.1, 2.1, 2.1]}>
+            <Milk3D isFocused={focusedObject === 'milk'} />
+          </group>
+          {/* Hit box para interacción cómoda */}
+          <mesh visible={false} position={[0, 0.28, 0]}>
+            <boxGeometry args={[0.5, 0.65, 0.5]} />
+            <meshBasicMaterial />
+          </mesh>
+        </group>
+
+        {/* 1.4 AZÚCAR (Frasco de vidrio con azúcar cristalina, destellos, lazo rosa y tapa dorada) */}
+        <group position={[0.2, 1.05, 0.8]} name="sugar">
+          {/* Frasco principal de azúcar */}
+          <group position={[0, 0.03, 0]} scale={[2.3, 2.3, 2.3]}>
+            <Sugar3D isFocused={focusedObject === 'sugar'} />
+          </group>
+          {/* Cuchara pastelera de madera reposando al lado */}
+          <group position={[0.16, 0.03, 0.12]} rotation={[0.2, 0.4, -0.3]}>
+            <cylinderGeometry args={[0.015, 0.015, 0.32, 8]} />
+            <meshStandardMaterial color="#b45309" roughness={0.7} />
+          </group>
+          {/* Granos de azúcar derramados coquetamente */}
+          <mesh position={[0.12, 0.01, -0.08]} rotation={[-Math.PI / 2, 0, 0]}>
+            <circleGeometry args={[0.09, 12]} />
+            <meshStandardMaterial color="#ffffff" roughness={0.3} transparent opacity={0.6} />
+          </mesh>
+          {/* Hit box para interacción cómoda */}
+          <mesh visible={false} position={[0, 0.25, 0]}>
+            <boxGeometry args={[0.5, 0.55, 0.5]} />
+            <meshBasicMaterial />
+          </mesh>
+        </group>
+
+        {/* 1.5 CHOCOLATE (Tabletas con 6 onzas en relieve 3D, envoltorio dorado y estuche rojo) */}
+        <group position={[0.2, 1.05, 1.4]} name="chocolate">
+          {/* Barra principal abierta exhibiendo las onzas y el dorado */}
+          <group position={[0, 0.04, -0.06]} scale={[2.2, 2.2, 2.2]}>
+            <Chocolate3D isFocused={focusedObject === 'chocolate'} />
+          </group>
+          {/* Segunda barra cerrada apilada en diagonal */}
+          <group position={[-0.04, 0.02, 0.12]} rotation={[0, -0.3, 0]} scale={[2.0, 2.0, 2.0]}>
+            <Chocolate3D isFocused={focusedObject === 'chocolate'} />
+          </group>
+          {/* Hit box para interacción cómoda */}
+          <mesh visible={false} position={[0, 0.15, 0]}>
+            <boxGeometry args={[0.55, 0.4, 0.55]} />
+            <meshBasicMaterial />
+          </mesh>
+        </group>
+
+        {/* 1.6 FRUTILLA (Canasta de mimbre con frutillas carnosas, cáliz verde, semillas doradas y tallo) */}
+        <group position={[0.2, 2.24, 0]} name="strawberry">
+          {/* Canasta de mimbre tejida */}
+          <RoundedBox args={[0.46, 0.18, 0.64]} radius={0.04} smoothness={3} position={[0, 0.09, 0]} castShadow>
             <meshStandardMaterial
               color={focusedObject === 'strawberry' ? '#fef08a' : '#b45309'}
               roughness={0.7}
             />
           </RoundedBox>
           {/* Asa arqueada semicircular de mimbre */}
-          <mesh position={[0, 0.18, 0]} rotation={[0, 0, Math.PI / 2]}>
-            <torusGeometry args={[0.22, 0.03, 8, 16, Math.PI]} />
+          <mesh position={[0, 0.28, 0]} rotation={[0, 0, Math.PI / 2]}>
+            <torusGeometry args={[0.24, 0.03, 8, 16, Math.PI]} />
             <meshStandardMaterial color="#92400e" roughness={0.7} />
           </mesh>
-          {/* Frutillas carnosas con tallo verde */}
-          {[-0.11, 0.11].map(x =>
-            [-0.18, 0, 0.18].map(z => (
-              <group key={`sb-${x}-${z}`} position={[x, 0.13, z]}>
-                <mesh scale={[1, 1.3, 1]}>
-                  <sphereGeometry args={[0.075, 10, 10]} />
-                  <meshStandardMaterial color="#e11d48" roughness={0.3} />
-                </mesh>
-                {/* Hojitas verdes del cáliz */}
-                <mesh position={[0, 0.09, 0]}>
-                  <coneGeometry args={[0.06, 0.03, 5]} />
-                  <meshStandardMaterial color="#16a34a" />
-                </mesh>
-              </group>
-            ))
-          )}
+          {/* Lecho de hojas verdes bajo las frutillas */}
+          <mesh position={[0, 0.17, 0]}>
+            <boxGeometry args={[0.4, 0.02, 0.58]} />
+            <meshStandardMaterial color="#15803d" roughness={0.6} />
+          </mesh>
+          {/* Pila de frutillas realistas con hojas, tallo y semillitas */}
+          {[
+            [-0.11, 0.2, -0.18, 0.1, 0.2],
+            [0.1, 0.21, -0.17, -0.15, -0.3],
+            [-0.09, 0.22, 0, 0.2, 0.1],
+            [0.11, 0.21, 0.02, -0.1, 0.4],
+            [-0.1, 0.2, 0.18, 0.05, -0.2],
+            [0.09, 0.21, 0.19, -0.2, -0.1],
+            [0, 0.26, -0.06, 0.1, 0.05],
+            [0.01, 0.26, 0.09, -0.08, 0.2],
+          ].map(([sx, sy, sz, rx, rz], sidx) => (
+            <group
+              key={`sb-shelf-${sidx}`}
+              position={[sx, sy, sz]}
+              rotation={[rx, sidx * 0.7, rz]}
+              scale={[1.85, 1.85, 1.85]}
+            >
+              <Strawberry3D isFocused={focusedObject === 'strawberry'} />
+            </group>
+          ))}
+          {/* Hit box para interacción cómoda en estante superior */}
+          <mesh visible={false} position={[0, 0.24, 0]}>
+            <boxGeometry args={[0.6, 0.5, 0.7]} />
+            <meshBasicMaterial />
+          </mesh>
         </group>
       </group>
 
@@ -666,11 +663,17 @@ export const Stations: React.FC<StationsProps> = ({
                 <sphereGeometry args={[0.16, 14, 14, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
                 <meshStandardMaterial color={focusedObject === objName ? '#fef08a' : '#fdf2f8'} roughness={0.2} />
               </mesh>
-              {/* Sprinkles de colores en el interior */}
-              <mesh position={[0, -0.02, 0]}>
-                <cylinderGeometry args={[0.14, 0.1, 0.05, 14]} />
-                <meshStandardMaterial color={bidx === 0 ? '#ec4899' : '#38bdf8'} roughness={0.5} />
-              </mesh>
+              {/* Sprinkles de colores o frutillas en el interior */}
+              {bidx === 0 ? (
+                <mesh position={[0, -0.02, 0]}>
+                  <cylinderGeometry args={[0.14, 0.1, 0.05, 14]} />
+                  <meshStandardMaterial color="#ec4899" roughness={0.5} />
+                </mesh>
+              ) : (
+                <group position={[0, -0.01, 0]} scale={[1.2, 1.2, 1.2]}>
+                  <Strawberry3D isFocused={focusedObject === objName} />
+                </group>
+              )}
             </group>
           );
         })}

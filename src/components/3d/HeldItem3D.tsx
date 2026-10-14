@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Group, Vector3, Quaternion, CylinderGeometry, BoxGeometry, CapsuleGeometry, TorusGeometry } from 'three';
 import { TrayState, ProductId, IngredientId } from '@/types/game';
 import { ToonOutline } from './ToonOutline';
+import { Ingredient3DItem } from './Ingredient3D';
 
 interface HeldItem3DProps {
   tray: TrayState;
@@ -220,72 +221,7 @@ export const HeldItem3D: React.FC<HeldItem3DProps> = ({ tray, isMoving }) => {
               const pos = positions[idx % positions.length];
               return (
                 <group key={`ing-${idx}-${item}`} position={[pos[0], pos[1], pos[2]]}>
-                  {item === 'flour' && (
-                    <group>
-                      <mesh position={[0, 0.08, 0]} castShadow>
-                        <cylinderGeometry args={[0.06, 0.07, 0.14, 10]} />
-                        <meshStandardMaterial color="#fef9c3" roughness={0.8} />
-                      </mesh>
-                      <mesh position={[0, 0.07, 0]}>
-                        <cylinderGeometry args={[0.065, 0.065, 0.05, 10]} />
-                        <meshStandardMaterial color="#ec4899" />
-                      </mesh>
-                    </group>
-                  )}
-                  {item === 'egg' && (
-                    <mesh position={[0, 0.05, 0]} rotation={[0.3, 0, 0.2]} castShadow>
-                      <sphereGeometry args={[0.05, 8, 8]} />
-                      <meshStandardMaterial color="#fef08a" roughness={0.4} />
-                    </mesh>
-                  )}
-                  {item === 'milk' && (
-                    <group position={[0, 0.07, 0]}>
-                      <mesh castShadow>
-                        <cylinderGeometry args={[0.035, 0.04, 0.13, 10]} />
-                        <meshStandardMaterial color="#e0f2fe" roughness={0.2} />
-                      </mesh>
-                      <mesh position={[0, 0.07, 0]}>
-                        <cylinderGeometry args={[0.02, 0.02, 0.02, 8]} />
-                        <meshStandardMaterial color="#0284c7" />
-                      </mesh>
-                    </group>
-                  )}
-                  {item === 'sugar' && (
-                    <group position={[0, 0.06, 0]}>
-                      <mesh castShadow>
-                        <cylinderGeometry args={[0.05, 0.05, 0.11, 10]} />
-                        <meshStandardMaterial color="#fce7f3" roughness={0.3} />
-                      </mesh>
-                      <mesh position={[0, 0.06, 0]}>
-                        <cylinderGeometry args={[0.055, 0.055, 0.02, 10]} />
-                        <meshStandardMaterial color="#ec4899" />
-                      </mesh>
-                    </group>
-                  )}
-                  {item === 'chocolate' && (
-                    <group position={[0, 0.03, 0]} rotation={[0, 0.4, 0]}>
-                      <mesh castShadow>
-                        <boxGeometry args={[0.1, 0.03, 0.14]} />
-                        <meshStandardMaterial color="#451a03" roughness={0.3} />
-                      </mesh>
-                      <mesh position={[0, 0.005, 0.03]}>
-                        <boxGeometry args={[0.105, 0.025, 0.07]} />
-                        <meshStandardMaterial color="#eab308" metalness={0.7} roughness={0.3} />
-                      </mesh>
-                    </group>
-                  )}
-                  {item === 'strawberry' && (
-                    <group position={[0, 0.04, 0]}>
-                      <mesh castShadow>
-                        <coneGeometry args={[0.04, 0.08, 8]} />
-                        <meshStandardMaterial color="#e11d48" roughness={0.3} />
-                      </mesh>
-                      <mesh position={[0, 0.04, 0]}>
-                        <sphereGeometry args={[0.02, 6, 6]} />
-                        <meshStandardMaterial color="#22c55e" />
-                      </mesh>
-                    </group>
-                  )}
+                  <Ingredient3DItem id={item} scale={0.78} />
                 </group>
               );
             })}
