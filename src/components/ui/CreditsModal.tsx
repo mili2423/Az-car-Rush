@@ -17,7 +17,7 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({ onClose }) => {
       isOpen
       onClose={onClose}
       title="Azúcar Rush"
-      subtitle="Pastelería 3D en Primera Persona"
+      subtitle="Pastelería & Cafetería"
       icon={<div className="text-3xl animate-bounce">🧁</div>}
       maxWidth="md"
       footer={
