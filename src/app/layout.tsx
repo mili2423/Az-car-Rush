@@ -9,8 +9,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: 'Azúcar Rush - Pastelería en Primera Persona 3D',
-  description: 'Juego 3D de gestión y rapidez en primera persona. Hornea, decora y levanta tu pastelería hasta la Gran Apertura.',
+  title: 'Azúcar Rush — Pasteler\u00eda',
+  description: 'Juego 3D de gesti\u00f3n y rapidez en primera persona. Hornea, decora y levanta tu pasteler\u00eda hasta la Gran Apertura.',
 };
 
 export default function RootLayout({

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
-import { PointerLockControls } from '@react-three/drei';
+import { PointerLockControls as ThreePointerLockControls } from 'three-stdlib';
 import { Vector3, Vector2, Raycaster, Object3D } from 'three';
 import { sounds } from '@/utils/audio';
 
@@ -11,6 +11,15 @@ interface PlayerControllerProps {
   isLocked: boolean;
   setIsLocked: (locked: boolean) => void;
   onMoveChange: (isMoving: boolean) => void;
+  enabled?: boolean;
+}
+
+/** Resetea completamente el estado de teclas de movimiento. */
+function resetMoveState(ms: { forward: boolean; backward: boolean; left: boolean; right: boolean }) {
+  ms.forward = false;
+  ms.backward = false;
+  ms.left = false;
+  ms.right = false;
 }
 
 export const PlayerController: React.FC<PlayerControllerProps> = ({
@@ -20,13 +29,15 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
   isLocked,
   setIsLocked,
   onMoveChange,
+  enabled = true,
 }) => {
-  const { camera, scene } = useThree();
+  const { camera, scene, gl } = useThree();
   const moveState = useRef({ forward: false, backward: false, left: false, right: false });
   const raycaster = useRef(new Raycaster());
   const lastStepTime = useRef(0);
   const wasMovingRef = useRef(false);
   const justLockedTime = useRef(0);
+  const controlsRef = useRef<ThreePointerLockControls | null>(null);
 
   // Initial camera position & view
   useEffect(() => {
@@ -34,19 +45,62 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
     camera.lookAt(0, 1.7, -4); // Facing back counters
   }, [camera]);
 
-  // Track lock events to prevent immediate click interaction on the lock frame
-  const handleLock = () => {
-    justLockedTime.current = performance.now();
-    setIsLocked(true);
-  };
+  // Controles de puntero nativos de Three.js (SIN listener global en document)
+  useEffect(() => {
+    if (!enabled) {
+      // Al desactivar: limpiar moveState para evitar teclas fantasma
+      resetMoveState(moveState.current);
+      wasMovingRef.current = false;
+      onMoveChange(false);
 
-  const handleUnlock = () => {
-    setIsLocked(false);
-    onMoveChange(false);
-  };
+      if (controlsRef.current) {
+        controlsRef.current.disconnect();
+        controlsRef.current.dispose();
+        controlsRef.current = null;
+      }
+      setIsLocked(false);
+      return;
+    }
+
+    const controls = new ThreePointerLockControls(camera, gl.domElement);
+    controlsRef.current = controls;
+
+    const onLock = () => {
+      justLockedTime.current = performance.now();
+      // Al recuperar el foco: resetear teclas para estado limpio basado en el teclado real
+      resetMoveState(moveState.current);
+      setIsLocked(true);
+    };
+
+    const onUnlock = () => {
+      // Al perder el lock: resetear siempre para evitar movimiento residual
+      resetMoveState(moveState.current);
+      wasMovingRef.current = false;
+      setIsLocked(false);
+      onMoveChange(false);
+    };
+
+    controls.addEventListener('lock', onLock);
+    controls.addEventListener('unlock', onUnlock);
+    controls.connect(gl.domElement);
+
+    return () => {
+      controls.removeEventListener('lock', onLock);
+      controls.removeEventListener('unlock', onUnlock);
+      controls.disconnect();
+      controls.dispose();
+      controlsRef.current = null;
+    };
+  }, [enabled, camera, gl.domElement, setIsLocked, onMoveChange]);
 
   // Keyboard and mouse interaction listeners
   useEffect(() => {
+    if (!enabled) {
+      // Garantía extra: limpiar teclas si el efecto anterior no lo hizo a tiempo
+      resetMoveState(moveState.current);
+      return;
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.code) {
         case 'KeyW':
@@ -95,28 +149,71 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
     };
 
     const handleMouseDown = (e: MouseEvent) => {
-      // Left click interacts only if locked and not the click that just acquired lock
-      if (isLocked && e.button === 0) {
+      // Left click interacts only if locked and enabled and not the initial lock click
+      if (isLocked && enabled && e.button === 0) {
         if (performance.now() - justLockedTime.current > 150) {
           onInteract();
         }
       }
     };
 
+    /**
+     * Reseteo de seguridad: cuando la ventana pierde el foco, se pierden los keyup.
+     * Limpiamos todas las teclas para que el personaje no camine solo al volver.
+     */
+    const handleBlur = () => {
+      resetMoveState(moveState.current);
+      wasMovingRef.current = false;
+      onMoveChange(false);
+    };
+
+    /**
+     * Igual que blur pero para cambios de pestaña (Alt+Tab en algunos navegadores
+     * no dispara blur en window pero sí visibilitychange en document).
+     */
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        resetMoveState(moveState.current);
+        wasMovingRef.current = false;
+        onMoveChange(false);
+      }
+    };
+
+    /**
+     * Cuando el navegador libera el pointer lock (ej. el usuario apretó ESC,
+     * cambió de pestaña, o el juego abrió un modal), los keyup se pierden.
+     * Reseteamos el movimiento inmediatamente.
+     */
+    const handlePointerLockChange = () => {
+      if (!document.pointerLockElement) {
+        resetMoveState(moveState.current);
+        wasMovingRef.current = false;
+        onMoveChange(false);
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('blur', handleBlur);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('pointerlockchange', handlePointerLockChange);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('blur', handleBlur);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('pointerlockchange', handlePointerLockChange);
+      // Limpieza al desmontar/actualizar: ninguna tecla queda "colgada"
+      resetMoveState(moveState.current);
     };
-  }, [isLocked, onInteract]);
+  }, [enabled, isLocked, onInteract, onMoveChange]);
 
   // Movement & Raycasting frame loop
   useFrame((_, delta) => {
-    if (!isLocked) return;
+    if (!enabled || !isLocked) return;
 
     const baseSpeed = 4.8 * (1 + walkSpeedBonus);
     const speed = baseSpeed * Math.min(delta, 0.08);
@@ -184,7 +281,7 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
       camera.position.x = validX;
       camera.position.z = validZ;
 
-      // Subtle footstep sound
+      // Footstep sound
       const now = performance.now();
       if (now - lastStepTime.current > 330) {
         sounds.playFootstep();
@@ -229,10 +326,5 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
     onFocusChange(hitInteractable);
   });
 
-  return (
-    <PointerLockControls
-      onLock={handleLock}
-      onUnlock={handleUnlock}
-    />
-  );
+  return null;
 };

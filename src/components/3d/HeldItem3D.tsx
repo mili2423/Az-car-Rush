@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Group, Vector3, Quaternion, CylinderGeometry, BoxGeometry, CapsuleGeometry, TorusGeometry } from 'three';
 import { TrayState, ProductId, IngredientId } from '@/types/game';
 import { ToonOutline } from './ToonOutline';
+import { Ingredient3DItem } from './Ingredient3D';
 
 interface HeldItem3DProps {
   tray: TrayState;
@@ -220,72 +221,7 @@ export const HeldItem3D: React.FC<HeldItem3DProps> = ({ tray, isMoving }) => {
               const pos = positions[idx % positions.length];
               return (
                 <group key={`ing-${idx}-${item}`} position={[pos[0], pos[1], pos[2]]}>
-                  {item === 'flour' && (
-                    <group>
-                      <mesh position={[0, 0.08, 0]} castShadow>
-                        <cylinderGeometry args={[0.06, 0.07, 0.14, 10]} />
-                        <meshStandardMaterial color="#fef9c3" roughness={0.8} />
-                      </mesh>
-                      <mesh position={[0, 0.07, 0]}>
-                        <cylinderGeometry args={[0.065, 0.065, 0.05, 10]} />
-                        <meshStandardMaterial color="#ec4899" />
-                      </mesh>
-                    </group>
-                  )}
-                  {item === 'egg' && (
-                    <mesh position={[0, 0.05, 0]} rotation={[0.3, 0, 0.2]} castShadow>
-                      <sphereGeometry args={[0.05, 8, 8]} />
-                      <meshStandardMaterial color="#fef08a" roughness={0.4} />
-                    </mesh>
-                  )}
-                  {item === 'milk' && (
-                    <group position={[0, 0.07, 0]}>
-                      <mesh castShadow>
-                        <cylinderGeometry args={[0.035, 0.04, 0.13, 10]} />
-                        <meshStandardMaterial color="#e0f2fe" roughness={0.2} />
-                      </mesh>
-                      <mesh position={[0, 0.07, 0]}>
-                        <cylinderGeometry args={[0.02, 0.02, 0.02, 8]} />
-                        <meshStandardMaterial color="#0284c7" />
-                      </mesh>
-                    </group>
-                  )}
-                  {item === 'sugar' && (
-                    <group position={[0, 0.06, 0]}>
-                      <mesh castShadow>
-                        <cylinderGeometry args={[0.05, 0.05, 0.11, 10]} />
-                        <meshStandardMaterial color="#fce7f3" roughness={0.3} />
-                      </mesh>
-                      <mesh position={[0, 0.06, 0]}>
-                        <cylinderGeometry args={[0.055, 0.055, 0.02, 10]} />
-                        <meshStandardMaterial color="#ec4899" />
-                      </mesh>
-                    </group>
-                  )}
-                  {item === 'chocolate' && (
-                    <group position={[0, 0.03, 0]} rotation={[0, 0.4, 0]}>
-                      <mesh castShadow>
-                        <boxGeometry args={[0.1, 0.03, 0.14]} />
-                        <meshStandardMaterial color="#451a03" roughness={0.3} />
-                      </mesh>
-                      <mesh position={[0, 0.005, 0.03]}>
-                        <boxGeometry args={[0.105, 0.025, 0.07]} />
-                        <meshStandardMaterial color="#eab308" metalness={0.7} roughness={0.3} />
-                      </mesh>
-                    </group>
-                  )}
-                  {item === 'strawberry' && (
-                    <group position={[0, 0.04, 0]}>
-                      <mesh castShadow>
-                        <coneGeometry args={[0.04, 0.08, 8]} />
-                        <meshStandardMaterial color="#e11d48" roughness={0.3} />
-                      </mesh>
-                      <mesh position={[0, 0.04, 0]}>
-                        <sphereGeometry args={[0.02, 6, 6]} />
-                        <meshStandardMaterial color="#22c55e" />
-                      </mesh>
-                    </group>
-                  )}
+                  <Ingredient3DItem id={item} scale={0.78} />
                 </group>
               );
             })}
@@ -312,7 +248,9 @@ export const HeldItem3D: React.FC<HeldItem3DProps> = ({ tray, isMoving }) => {
         {(tray.type === 'baked' || tray.type === 'finished') && (
           <Product3DItem
             productId={tray.recipeId}
-            stepIndex={tray.type === 'finished' ? 99 : 0}
+            isFinished={tray.type === 'finished'}
+            decorations={tray.type === 'finished' ? tray.decorations : undefined}
+            hasError={tray.type === 'finished' ? tray.isIncorrectDecor : false}
           />
         )}
 
@@ -340,11 +278,161 @@ export const HeldItem3D: React.FC<HeldItem3DProps> = ({ tray, isMoving }) => {
   );
 };
 
-// Sub-component to render the specific 3D pastry model
-export const Product3DItem: React.FC<{ productId: ProductId; stepIndex: number }> = ({
-  productId,
-  stepIndex,
+// ─── TOPPERS Y DECORACIONES 3D ESTILIZADAS ────────────────────────────────────
+const HeartTopper: React.FC<{ color?: string; position?: [number, number, number]; scale?: number }> = ({
+  color = '#ef4444',
+  position = [0, 0, 0],
+  scale = 1,
+}) => (
+  <group position={position} scale={[scale, scale, scale]}>
+    <mesh position={[-0.015, 0.015, 0]}>
+      <sphereGeometry args={[0.02, 10, 10]} />
+      <meshStandardMaterial color={color} roughness={0.25} />
+    </mesh>
+    <mesh position={[0.015, 0.015, 0]}>
+      <sphereGeometry args={[0.02, 10, 10]} />
+      <meshStandardMaterial color={color} roughness={0.25} />
+    </mesh>
+    <mesh position={[0, -0.01, 0]} rotation={[0, 0, Math.PI]}>
+      <coneGeometry args={[0.028, 0.04, 10]} />
+      <meshStandardMaterial color={color} roughness={0.25} />
+    </mesh>
+  </group>
+);
+
+const SmileyTopper: React.FC<{ position?: [number, number, number]; scale?: number }> = ({
+  position = [0, 0, 0],
+  scale = 1,
+}) => (
+  <group position={position} scale={[scale, scale, scale]}>
+    <mesh rotation={[Math.PI / 2, 0, 0]}>
+      <cylinderGeometry args={[0.035, 0.035, 0.008, 16]} />
+      <meshStandardMaterial color="#f59e0b" roughness={0.3} />
+    </mesh>
+    <mesh position={[-0.012, 0.006, 0.008]}>
+      <sphereGeometry args={[0.004, 6, 6]} />
+      <meshStandardMaterial color="#451a03" />
+    </mesh>
+    <mesh position={[0.012, 0.006, 0.008]}>
+      <sphereGeometry args={[0.004, 6, 6]} />
+      <meshStandardMaterial color="#451a03" />
+    </mesh>
+    <mesh position={[0, -0.008, 0.008]} rotation={[0, 0, Math.PI]}>
+      <torusGeometry args={[0.012, 0.003, 6, 10, Math.PI]} />
+      <meshStandardMaterial color="#451a03" />
+    </mesh>
+  </group>
+);
+
+const CloverTopper: React.FC<{ position?: [number, number, number]; scale?: number }> = ({
+  position = [0, 0, 0],
+  scale = 1,
+}) => (
+  <group position={position} scale={[scale, scale, scale]}>
+    {[-0.014, 0.014].map(x =>
+      [-0.014, 0.014].map(z => (
+        <mesh key={`clover-${x}-${z}`} position={[x, 0, z]}>
+          <sphereGeometry args={[0.014, 8, 8]} />
+          <meshStandardMaterial color="#22c55e" roughness={0.3} />
+        </mesh>
+      ))
+    )}
+  </group>
+);
+
+const FlameTopper: React.FC<{ position?: [number, number, number]; scale?: number }> = ({
+  position = [0, 0, 0],
+  scale = 1,
+}) => (
+  <group position={position} scale={[scale, scale, scale]}>
+    <mesh position={[0, 0.03, 0]}>
+      <cylinderGeometry args={[0.01, 0.01, 0.06, 8]} />
+      <meshStandardMaterial color="#fbbf24" />
+    </mesh>
+    <mesh position={[0, 0.07, 0]}>
+      <coneGeometry args={[0.016, 0.032, 8]} />
+      <meshStandardMaterial color="#ef4444" emissive="#f97316" emissiveIntensity={2.5} />
+    </mesh>
+  </group>
+);
+
+const StrawberryTopper: React.FC<{ position?: [number, number, number]; scale?: number }> = ({
+  position = [0, 0, 0],
+  scale = 1,
+}) => (
+  <group position={position} scale={[scale, scale, scale]}>
+    <mesh position={[0, 0.02, 0]}>
+      <coneGeometry args={[0.03, 0.06, 8]} />
+      <meshStandardMaterial color="#e11d48" roughness={0.25} />
+    </mesh>
+    <mesh position={[0, 0.048, 0]}>
+      <cylinderGeometry args={[0.025, 0.01, 0.006, 6]} />
+      <meshStandardMaterial color="#22c55e" />
+    </mesh>
+  </group>
+);
+
+const SprinklesLayer: React.FC<{ radius?: number; y?: number; count?: number }> = ({
+  radius = 0.1,
+  y = 0.02,
+  count = 10,
 }) => {
+  const colors = ['#ec4899', '#38bdf8', '#facc15', '#a855f7', '#22c55e', '#f97316'];
+  const angles = Array.from({ length: count }, (_, i) => (i * Math.PI * 2) / count);
+  return (
+    <group position={[0, y, 0]}>
+      {angles.map((ang, i) => {
+        const r = radius * (0.4 + 0.6 * ((i % 3) / 2));
+        const x = Math.cos(ang) * r;
+        const z = Math.sin(ang) * r;
+        return (
+          <mesh key={`sp-${i}`} position={[x, 0, z]} rotation={[0.4, ang, 0.2]}>
+            <capsuleGeometry args={[0.005, 0.012, 4, 8]} />
+            <meshStandardMaterial color={colors[i % colors.length]} roughness={0.3} />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+};
+
+// Sub-component to render the specific 3D pastry model
+export const Product3DItem: React.FC<{
+  productId: ProductId;
+  isFinished?: boolean;
+  decorations?: string[];
+  hasError?: boolean;
+}> = ({
+  productId,
+  isFinished = false,
+  decorations = [],
+  hasError = false,
+}) => {
+  // Determinar decoraciones efectivas (si está finished y sin decoraciones explícitas, usar las por defecto)
+  const decs = decorations.length > 0
+    ? decorations
+    : isFinished
+    ? (productId === 'donut' ? ['glaze_pink', 'sprinkles']
+      : productId === 'cupcake' ? ['waves', 'heart']
+      : productId === 'tart' ? ['zigzag', 'strawberry']
+      : productId === 'cake' ? ['zigzag', 'flame']
+      : [])
+    : [];
+
+  const hasGlazePink = decs.includes('glaze_pink');
+  const hasWaves = decs.includes('waves');
+  const hasZigzag = decs.includes('zigzag');
+  const hasBase = hasGlazePink || hasWaves || hasZigzag;
+
+  const hasHeart = decs.includes('heart');
+  const hasSmiley = decs.includes('smiley');
+  const hasClover = decs.includes('clover');
+  const hasFlame = decs.includes('flame');
+  const hasSprinkles = decs.includes('sprinkles');
+  const hasStrawberry = decs.includes('strawberry');
+
+  const errorColor = hasError ? '#b91c1c' : undefined;
+
   switch (productId) {
     case 'cookie':
       return (
@@ -353,7 +441,6 @@ export const Product3DItem: React.FC<{ productId: ProductId; stepIndex: number }
             <cylinderGeometry args={[0.14, 0.14, 0.035, 16]} />
             <meshStandardMaterial color="#d97706" roughness={0.6} />
           </mesh>
-          {/* Chocolate chips */}
           {[
             [-0.06, 0.02, -0.04],
             [0.05, 0.02, 0.05],
@@ -382,20 +469,30 @@ export const Product3DItem: React.FC<{ productId: ProductId; stepIndex: number }
             <sphereGeometry args={[0.095, 12, 10]} />
             <meshStandardMaterial color="#78350f" roughness={0.6} />
           </mesh>
-          {/* If decorated step 1: Luscious Pink Swirl Frosting */}
-          {stepIndex >= 1 && (
-            <mesh position={[0, 0.11, 0]} castShadow>
-              <coneGeometry args={[0.08, 0.1, 10]} />
-              <meshStandardMaterial color="#ec4899" roughness={0.3} />
-            </mesh>
+
+          {/* Glaseado / Borde Base */}
+          {hasBase && (
+            <group position={[0, 0.11, 0]}>
+              <mesh castShadow>
+                <coneGeometry args={[0.08, 0.09, 12]} />
+                <meshStandardMaterial
+                  color={
+                    errorColor ||
+                    (hasWaves ? '#38bdf8' : hasZigzag ? '#fbbf24' : '#ec4899')
+                  }
+                  roughness={0.3}
+                />
+              </mesh>
+            </group>
           )}
-          {/* Step 2: Cherry on top (Sprinkles representation) */}
-          {stepIndex >= 2 && (
-            <mesh position={[0, 0.18, 0]}>
-              <sphereGeometry args={[0.025, 8, 8]} />
-              <meshStandardMaterial color="#e11d48" roughness={0.2} />
-            </mesh>
-          )}
+
+          {/* Toppers Superiores */}
+          {hasHeart && <HeartTopper position={[0, 0.17, 0]} scale={1.1} />}
+          {hasSmiley && <SmileyTopper position={[0, 0.17, 0]} scale={1.1} />}
+          {hasClover && <CloverTopper position={[0, 0.16, 0]} scale={1.1} />}
+          {hasFlame && <FlameTopper position={[0, 0.14, 0]} scale={1.0} />}
+          {hasSprinkles && <SprinklesLayer radius={0.06} y={0.14} count={8} />}
+          {hasStrawberry && <StrawberryTopper position={[0, 0.15, 0]} scale={1.0} />}
         </group>
       );
 
@@ -407,13 +504,28 @@ export const Product3DItem: React.FC<{ productId: ProductId; stepIndex: number }
             <torusGeometry args={[0.11, 0.055, 12, 20]} />
             <meshStandardMaterial color="#d97706" roughness={0.5} />
           </mesh>
-          {/* If decorated step 1: Pink Strawberry Glaze */}
-          {stepIndex >= 1 && (
+
+          {/* Glaseado Base */}
+          {hasBase && (
             <mesh position={[0, 0, 0.02]}>
-              <torusGeometry args={[0.11, 0.045, 10, 20, Math.PI * 1.8]} />
-              <meshStandardMaterial color="#f472b6" roughness={0.2} />
+              <torusGeometry args={[0.11, 0.045, 10, 20, Math.PI * 1.85]} />
+              <meshStandardMaterial
+                color={
+                  errorColor ||
+                  (hasWaves ? '#38bdf8' : hasZigzag ? '#fbbf24' : '#f472b6')
+                }
+                roughness={0.2}
+              />
             </mesh>
           )}
+
+          {/* Toppers sobre la donut */}
+          {hasSprinkles && <SprinklesLayer radius={0.11} y={0.04} count={12} />}
+          {hasHeart && <HeartTopper position={[0, 0.07, 0.04]} scale={0.9} />}
+          {hasSmiley && <SmileyTopper position={[0, 0.07, 0.04]} scale={0.9} />}
+          {hasClover && <CloverTopper position={[0, 0.07, 0.04]} scale={0.9} />}
+          {hasFlame && <FlameTopper position={[0, 0.06, 0.04]} scale={0.9} />}
+          {hasStrawberry && <StrawberryTopper position={[0, 0.07, 0.04]} scale={0.9} />}
         </group>
       );
 
@@ -430,26 +542,41 @@ export const Product3DItem: React.FC<{ productId: ProductId; stepIndex: number }
             <cylinderGeometry args={[0.13, 0.13, 0.02, 14]} />
             <meshStandardMaterial color="#fef08a" roughness={0.3} />
           </mesh>
-          {/* Step 1: Cream center swirl */}
-          {stepIndex >= 1 && (
-            <mesh position={[0, 0.06, 0]}>
-              <sphereGeometry args={[0.03, 8, 8]} />
-              <meshStandardMaterial color="#ffffff" roughness={0.3} />
+
+          {/* Borde / Glaseado de Tarta */}
+          {hasBase && (
+            <mesh position={[0, 0.038, 0]}>
+              <torusGeometry args={[0.12, 0.018, 8, 20]} />
+              <meshStandardMaterial
+                color={
+                  errorColor ||
+                  (hasWaves ? '#38bdf8' : hasZigzag ? '#fbbf24' : '#f472b6')
+                }
+                roughness={0.3}
+              />
             </mesh>
           )}
-          {/* Step 2: Fresh Strawberries */}
-          {stepIndex >= 2 && (
+
+          {/* Toppers de Tarta */}
+          {hasStrawberry && (
             <group position={[0, 0.045, 0]}>
               {[-0.05, 0.05].map(x =>
                 [-0.05, 0.05].map(z => (
-                  <mesh key={`tart-b-${x}-${z}`} position={[x, 0, z]}>
-                    <coneGeometry args={[0.03, 0.06, 6]} />
-                    <meshStandardMaterial color="#e11d48" roughness={0.2} />
-                  </mesh>
+                  <StrawberryTopper key={`tart-b-${x}-${z}`} position={[x, 0, z]} scale={0.8} />
                 ))
               )}
+              {/* Cream center swirl */}
+              <mesh position={[0, 0.015, 0]}>
+                <sphereGeometry args={[0.03, 8, 8]} />
+                <meshStandardMaterial color="#ffffff" roughness={0.3} />
+              </mesh>
             </group>
           )}
+          {hasHeart && <HeartTopper position={[0, 0.06, 0]} scale={1.2} />}
+          {hasSmiley && <SmileyTopper position={[0, 0.06, 0]} scale={1.2} />}
+          {hasClover && <CloverTopper position={[0, 0.05, 0]} scale={1.2} />}
+          {hasFlame && <FlameTopper position={[0, 0.04, 0]} scale={1.0} />}
+          {hasSprinkles && <SprinklesLayer radius={0.1} y={0.04} count={10} />}
         </group>
       );
 
@@ -461,39 +588,40 @@ export const Product3DItem: React.FC<{ productId: ProductId; stepIndex: number }
             <cylinderGeometry args={[0.16, 0.16, 0.09, 16]} />
             <meshStandardMaterial color="#fed7aa" roughness={0.5} />
           </mesh>
-          {/* If decorated step 1: Royal Violet Icing */}
-          {stepIndex >= 1 && (
-            <mesh position={[0, 0.045, 0]}>
-              <cylinderGeometry args={[0.165, 0.165, 0.02, 16]} />
-              <meshStandardMaterial color="#a855f7" roughness={0.2} />
-            </mesh>
-          )}
-          {/* Step 2: Cute Candle in center */}
-          {stepIndex >= 2 && (
+
+          {/* Glaseado / Icing Base */}
+          {hasBase && (
             <group position={[0, 0.045, 0]}>
-              <mesh position={[0, 0.06, 0]}>
-                <cylinderGeometry args={[0.012, 0.012, 0.08, 6]} />
-                <meshStandardMaterial color="#fbbf24" />
-              </mesh>
-              {/* Flame */}
-              <mesh position={[0, 0.11, 0]}>
-                <coneGeometry args={[0.015, 0.03, 6]} />
-                <meshStandardMaterial color="#ef4444" emissive="#f97316" emissiveIntensity={1.5} />
+              <mesh>
+                <cylinderGeometry args={[0.165, 0.165, 0.02, 16]} />
+                <meshStandardMaterial
+                  color={
+                    errorColor ||
+                    (hasWaves ? '#38bdf8' : hasZigzag ? '#fbbf24' : '#a855f7')
+                  }
+                  roughness={0.2}
+                />
               </mesh>
             </group>
           )}
+
+          {/* Toppers de Torta */}
+          {hasFlame && <FlameTopper position={[0, 0.05, 0]} scale={1.1} />}
+          {hasHeart && <HeartTopper position={[0, 0.08, 0]} scale={1.2} />}
+          {hasSmiley && <SmileyTopper position={[0, 0.08, 0]} scale={1.2} />}
+          {hasClover && <CloverTopper position={[0, 0.07, 0]} scale={1.2} />}
+          {hasSprinkles && <SprinklesLayer radius={0.12} y={0.06} count={12} />}
+          {hasStrawberry && <StrawberryTopper position={[0, 0.07, 0]} scale={1.1} />}
         </group>
       );
 
     case 'pastry':
       return (
         <group position={[0, 0.04, 0]} rotation={[0, 0.3, 0]}>
-          {/* Crescent Medialuna / Factura */}
           <mesh castShadow>
             <torusGeometry args={[0.1, 0.045, 8, 14, Math.PI * 1.3]} />
             <meshStandardMaterial color="#d97706" roughness={0.4} />
           </mesh>
-          {/* Sweet Sugar Syrup Glaze */}
           <mesh position={[0, 0.01, 0]}>
             <torusGeometry args={[0.1, 0.04, 6, 12, Math.PI * 1.2]} />
             <meshStandardMaterial color="#fef08a" roughness={0.1} transparent opacity={0.6} />

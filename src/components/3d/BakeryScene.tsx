@@ -8,6 +8,7 @@ import { Customer3D } from './Customer3D';
 import { PlayerController } from './PlayerController';
 import { HeldItem3D } from './HeldItem3D';
 import { CustomerOrder, OvenState, TrayState } from '@/types/game';
+import { requestGamePointerLock } from '@/utils/mouseManager';
 
 interface BakerySceneProps {
   ovenState: OvenState;
@@ -20,6 +21,7 @@ interface BakerySceneProps {
   onInteract: () => void;
   isLocked: boolean;
   setIsLocked: (locked: boolean) => void;
+  isMenuOpen?: boolean;
 }
 
 export const BakeryScene: React.FC<BakerySceneProps> = ({
@@ -33,6 +35,7 @@ export const BakeryScene: React.FC<BakerySceneProps> = ({
   onInteract,
   isLocked,
   setIsLocked,
+  isMenuOpen = false,
 }) => {
   const [isMoving, setIsMoving] = useState(false);
 
@@ -55,7 +58,7 @@ export const BakeryScene: React.FC<BakerySceneProps> = ({
           {/* 3D Held Viewmodel in First Person (Hands + Tray + Item) */}
           <HeldItem3D tray={tray} isMoving={isMoving} />
 
-          {/* First Person Movement & Pointer Lock */}
+          {/* First Person Movement & Pointer Lock: SOLO activo cuando NO hay menú o popup */}
           <PlayerController
             walkSpeedBonus={walkSpeedBonus}
             onFocusChange={onFocusChange}
@@ -63,31 +66,44 @@ export const BakeryScene: React.FC<BakerySceneProps> = ({
             isLocked={isLocked}
             setIsLocked={setIsLocked}
             onMoveChange={setIsMoving}
+            enabled={!isMenuOpen}
           />
         </Suspense>
       </Canvas>
 
-      {/* Pointer Lock Resume Overlay (when paused or lost focus) */}
-      {!isLocked && (
+      {/* Capa de reanudación: ÚNICAMENTE visible si perdimos el foco durante el juego y NO hay menú abierto */}
+      {!isLocked && !isMenuOpen && (
         <div
-          onClick={() => {
-            const canvas = document.querySelector('canvas');
-            canvas?.requestPointerLock();
+          onClick={(e) => {
+            e.stopPropagation();
+            requestGamePointerLock();
           }}
-          className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm cursor-pointer transition-all duration-300"
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/65 backdrop-blur-sm cursor-pointer select-none transition-all duration-300 p-4"
         >
-          <div className="bg-white/95 border-2 border-pink-400 p-8 rounded-3xl shadow-2xl text-center max-w-md transform hover:scale-105 transition-transform duration-200">
-            <div className="text-4xl mb-3 animate-bounce">👩‍🍳</div>
-            <h3 className="text-2xl font-black text-amber-900 mb-2 font-display">
+          <div
+            className="relative flex flex-col items-center bg-[#fffbf7] border-4 border-pink-300 p-8 rounded-3xl shadow-2xl text-center max-w-sm sm:max-w-md transform hover:scale-[1.02] transition-transform duration-200 animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top gloss strip */}
+            <div className="absolute top-0 left-6 right-6 h-1.5 bg-gradient-to-r from-pink-400 via-purple-400 to-amber-300 rounded-b-full pointer-events-none" />
+
+            <div className="text-4xl mb-2 animate-bounce">👩‍🍳</div>
+            <h3 className="text-2xl sm:text-3xl font-black text-[#451a03] mb-1 tracking-tight">
               Haz clic para jugar
             </h3>
-            <p className="text-sm text-gray-600 mb-5 leading-relaxed">
-              Bloquea el cursor para mirar en primera persona con el mouse y moverte con <span className="font-bold text-pink-600">WASD</span>.
+            <p className="text-xs sm:text-sm text-stone-600 mb-5 font-semibold leading-relaxed">
+              Bloquea el cursor para mirar en 360° con el mouse y moverte por la cocina con <strong className="text-pink-600 font-black">WASD</strong>.
             </p>
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-400 text-white font-bold py-2.5 px-6 rounded-full shadow-lg">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                requestGamePointerLock();
+              }}
+              className="inline-flex items-center gap-2.5 bg-gradient-to-r from-pink-500 via-rose-500 to-fuchsia-500 text-white font-black text-sm py-3 px-6 rounded-full border-2 border-pink-200/70 shadow-[0_4px_0_#9d174d,0_8px_20px_rgba(219,39,119,0.35)] transition-transform hover:brightness-105 active:translate-y-1 active:shadow-[0_1px_0_#9d174d]"
+            >
               <span>Continuar en la Pastelería</span>
-              <kbd className="bg-white/20 px-2 py-0.5 rounded text-xs">CLICK</kbd>
-            </div>
+              <kbd className="bg-white/25 px-2 py-0.5 rounded text-[11px] font-mono shadow-2xs">CLICK</kbd>
+            </button>
           </div>
         </div>
       )}

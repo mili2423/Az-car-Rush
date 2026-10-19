@@ -1,23 +1,47 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Canvas } from '@react-three/fiber';
 import { ProductId, RECIPES } from '@/types/game';
 import { sounds } from '@/utils/audio';
-import { Product3DItem } from '@/components/3d/HeldItem3D';
 
 // ─── Decoración disponibles con colores y nombres ───────────────────────────
 const ALL_DECORATIONS = [
-  { id: 'Glaseado Rosa',      color: '#f472b6', emoji: '🌸' },
-  { id: 'Glaseado Violeta',   color: '#a855f7', emoji: '💜' },
-  { id: 'Glaseado Celeste',   color: '#38bdf8', emoji: '💙' },
-  { id: 'Glaseado Limón',     color: '#facc15', emoji: '🍋' },
-  { id: 'Crema Chantilly',    color: '#ffffff', emoji: '🤍' },
-  { id: 'Frutillas Frescas',  color: '#e11d48', emoji: '🍓' },
-  { id: 'Chispas de Colores', color: '#a855f7', emoji: '✨' },
-  { id: 'Velitas de Fiesta',  color: '#f59e0b', emoji: '🕯️' },
-  { id: 'Caramelo Dorado',    color: '#d97706', emoji: '🍯' },
+  { id: 'pink_glaze',    name: 'Glaseado Rosa',      color: '#f472b6', emoji: '🌸' },
+  { id: 'choco_glaze',   name: 'Glaseado Chocolate',  color: '#7c3aed', emoji: '🍫' },
+  { id: 'blue_glaze',    name: 'Glaseado Celeste',    color: '#38bdf8', emoji: '💙' },
+  { id: 'yellow_glaze',  name: 'Glaseado Limón',      color: '#facc15', emoji: '🍋' },
+  { id: 'cream_glaze',   name: 'Glaseado Crema',      color: '#fde68a', emoji: '🍦' },
+  { id: 'strawberries',  name: 'Frutillas Frescas',   color: '#e11d48', emoji: '🍓' },
+  { id: 'sprinkles',     name: 'Chispas de Colores',  color: '#a855f7', emoji: '✨' },
+  { id: 'candles',       name: 'Velitas de Fiesta',   color: '#f59e0b', emoji: '🕯️' },
+  { id: 'cream',         name: 'Crema Chantilly',     color: '#ffffff', emoji: '🤍' },
+  { id: 'caramel',       name: 'Caramelo Dorado',     color: '#d97706', emoji: '🍯' },
 ];
+
+// Mapeo: qué decoración es la "correcta" para cada receta
+const CORRECT_DECORATION: Record<ProductId, string[]> = {
+  cookie:  [],
+  pastry:  [],
+  cupcake: ['choco_glaze', 'sprinkles'],
+  donut:   ['pink_glaze'],
+  tart:    ['strawberries', 'cream'],
+  cake:    ['choco_glaze', 'candles'],
+};
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildOptions(correctId: string): typeof ALL_DECORATIONS {
+  const correct = ALL_DECORATIONS.find(d => d.id === correctId)!;
+  const others = shuffle(ALL_DECORATIONS.filter(d => d.id !== correctId)).slice(0, 3);
+  return shuffle([correct, ...others]);
+}
 
 interface DecorationMenuProps {
   recipeId: ProductId;
@@ -31,37 +55,47 @@ export const DecorationMenu: React.FC<DecorationMenuProps> = ({
   onCancel,
 }) => {
   const recipe = RECIPES[recipeId];
-  const steps = recipe.decorationSteps || [];
+  const steps = CORRECT_DECORATION[recipeId] ?? [];
   const [stepIndex, setStepIndex] = useState(0);
   const [wrongSelected, setWrongSelected] = useState<string | null>(null);
-  const [isIncorrect, setIsIncorrect] = useState(false);
+  const [correctSelected, setCorrectSelected] = useState<string | null>(null);
+  const [allCorrect, setAllCorrect] = useState(true);
+
+  const currentCorrectId = steps[stepIndex] ?? steps[0] ?? 'pink_glaze';
+  const [options] = useState(() => buildOptions(currentCorrectId));
+
+  // Rebuild options when step changes - we use a key trick to remount
+  const stepOptions = buildOptions(steps[stepIndex] ?? currentCorrectId);
 
   const handlePick = useCallback((decId: string) => {
-    if (stepIndex >= steps.length) return;
-
-    const correctId = steps[stepIndex];
-    if (decId === correctId) {
+    const isCorrect = decId === (steps[stepIndex] ?? currentCorrectId);
+    if (isCorrect) {
       sounds.playPickup();
-      const nextStep = stepIndex + 1;
-      setStepIndex(nextStep);
+      setCorrectSelected(decId);
 
-      if (nextStep >= steps.length) {
-        // Wait a bit to let them see the finished product before closing
-        setTimeout(() => {
-          onDecorate(!isIncorrect);
-        }, 1200);
-      }
+      setTimeout(() => {
+        if (stepIndex < steps.length - 1) {
+          setStepIndex(s => s + 1);
+          setCorrectSelected(null);
+          setWrongSelected(null);
+        } else {
+          onDecorate(allCorrect);
+        }
+      }, 600);
     } else {
       sounds.playError();
       setWrongSelected(decId);
-      setIsIncorrect(true);
-      
-      // Let the player try again after a short delay
+      setAllCorrect(false);
+      // Let the player try again with the wrong one shaking, then auto-continue after 1s
       setTimeout(() => {
         setWrongSelected(null);
-      }, 600);
+        // Still finish - mark as incorrectly decorated
+        if (stepIndex >= steps.length - 1) {
+          onDecorate(false);
+        }
+      }, 1000);
     }
-  }, [stepIndex, steps, isIncorrect, onDecorate]);
+  }, [stepIndex, steps, currentCorrectId, allCorrect, onDecorate]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -71,85 +105,93 @@ export const DecorationMenu: React.FC<DecorationMenuProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onCancel]);
 
+  const currentStepCorrectId = steps[stepIndex] ?? currentCorrectId;
+  const displayOptions = buildOptions(currentStepCorrectId);
+
+  const stepLabel = steps.length > 1
+    ? `Paso ${stepIndex + 1} de ${steps.length}`
+    : 'Elige la decoración';
+
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="flex flex-col w-full max-w-4xl h-[90vh] bg-stone-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-pink-500">
-        
+    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div
+        className="relative flex flex-col items-center rounded-3xl p-7 shadow-2xl max-w-sm w-full text-center"
+        style={{
+          background: 'rgba(255,252,245,0.98)',
+          border: '2.5px solid #f9a8d4',
+          boxShadow: '0 20px 60px rgba(180,80,120,0.25)',
+        }}
+      >
         {/* Header */}
-        <div className="bg-pink-600 text-white p-4 text-center shadow-md relative z-10">
-          <h2 className="text-2xl font-black tracking-wide uppercase">Estación de Decoración</h2>
-          <p className="text-pink-100 font-medium">Pedido: {recipe.name}</p>
-          <button 
-            onClick={onCancel}
-            className="absolute right-6 top-6 text-pink-200 hover:text-white font-bold"
-          >
-            [ESC] Volver
-          </button>
+        <div className="text-3xl mb-1 animate-bounce">{recipe.emoji}</div>
+        <h3 className="text-xl font-black text-stone-800 mb-0.5">Mesa de Decoración</h3>
+        <p className="text-xs text-stone-500 mb-1">
+          Decorando: <span className="font-bold text-pink-600">{recipe.name}</span>
+        </p>
+        <div className="text-[11px] font-bold text-amber-600 uppercase tracking-wider mb-5 bg-amber-50 border border-amber-200 rounded-full px-3 py-0.5">
+          {stepLabel}
         </div>
 
-        {/* 3D Viewer Area */}
-        <div className="relative flex-1 bg-stone-800">
-          {/* Requerimientos del cliente */}
-          <div className="absolute top-4 left-4 bg-black/60 p-4 rounded-xl border border-stone-600 z-10 max-w-xs">
-            <h3 className="text-white font-bold mb-2 uppercase text-xs tracking-widest text-stone-400">El cliente pide:</h3>
-            <ul className="space-y-2">
-              {steps.map((step, i) => (
-                <li key={i} className={\`flex items-center gap-2 text-sm font-medium \${i < stepIndex ? 'text-green-400' : i === stepIndex ? 'text-white' : 'text-stone-500'}\`}>
-                  <span>{i < stepIndex ? '✓' : i === stepIndex ? '▶' : ' '}</span>
-                  {step}
-                </li>
-              ))}
-            </ul>
+        {/* 4 decoration options grid */}
+        <div className="grid grid-cols-2 gap-3 w-full mb-5">
+          {displayOptions.map(dec => {
+            const isWrong = wrongSelected === dec.id;
+            const isCorrectPick = correctSelected === dec.id;
+            return (
+              <button
+                key={dec.id}
+                onClick={() => !wrongSelected && !correctSelected && handlePick(dec.id)}
+                className="flex flex-col items-center gap-1.5 p-4 rounded-2xl font-bold text-sm transition-all duration-150 active:scale-95 select-none"
+                style={{
+                  background: isCorrectPick
+                    ? '#dcfce7'
+                    : isWrong
+                    ? '#fee2e2'
+                    : `${dec.color}22`,
+                  border: `2.5px solid ${
+                    isCorrectPick ? '#86efac' : isWrong ? '#fca5a5' : dec.color
+                  }`,
+                  color: '#292524',
+                  transform: isWrong ? 'translateX(-4px)' : 'none',
+                  animation: isWrong ? 'shake 0.3s ease' : 'none',
+                  boxShadow: isCorrectPick
+                    ? '0 0 0 3px #22c55e44'
+                    : isWrong
+                    ? '0 0 0 3px #ef444444'
+                    : 'none',
+                }}
+              >
+                <span className="text-2xl">{dec.emoji}</span>
+                <span className="text-[11px] font-black text-stone-700 leading-tight">{dec.name}</span>
+                {isCorrectPick && <span className="text-[10px] text-green-600 font-black">✓ ¡Correcto!</span>}
+                {isWrong && <span className="text-[10px] text-red-500 font-black">✗ Error</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Step indicator dots */}
+        {steps.length > 1 && (
+          <div className="flex gap-2 mb-4">
+            {steps.map((_, i) => (
+              <div
+                key={i}
+                className="w-2 h-2 rounded-full transition-all"
+                style={{
+                  background: i < stepIndex ? '#22c55e' : i === stepIndex ? '#ec4899' : '#e5e7eb',
+                  transform: i === stepIndex ? 'scale(1.4)' : 'scale(1)',
+                }}
+              />
+            ))}
           </div>
+        )}
 
-          <Canvas shadows camera={{ position: [0, 0.3, 0.6], fov: 45 }}>
-            <ambientLight intensity={1.5} />
-            <directionalLight position={[2, 4, 2]} intensity={2.5} castShadow />
-            <pointLight position={[-2, 2, -2]} intensity={1.5} />
-            
-            {/* Turntable / Table base */}
-            <mesh position={[0, -0.02, 0]} receiveShadow>
-              <cylinderGeometry args={[0.3, 0.32, 0.04, 32]} />
-              <meshStandardMaterial color="#333" roughness={0.7} />
-            </mesh>
-            <mesh position={[0, -0.05, 0]} receiveShadow>
-              <cylinderGeometry args={[0.2, 0.2, 0.06, 32]} />
-              <meshStandardMaterial color="#222" />
-            </mesh>
-
-            {/* Product */}
-            <group scale={[1.8, 1.8, 1.8]} position={[0, 0, 0]}>
-              <Product3DItem productId={recipeId} stepIndex={stepIndex} />
-            </group>
-          </Canvas>
-        </div>
-
-        {/* Decorator Controls Grid */}
-        <div className="bg-stone-100 p-6 shadow-[0_-10px_30px_rgba(0,0,0,0.3)] z-10">
-          <h3 className="text-center font-black text-stone-700 mb-4 uppercase tracking-widest">Opciones de Decoración</h3>
-          <div className="grid grid-cols-5 gap-3 max-w-3xl mx-auto">
-            {ALL_DECORATIONS.map(dec => {
-              const isWrong = wrongSelected === dec.id;
-              return (
-                <button
-                  key={dec.id}
-                  onClick={() => !wrongSelected && handlePick(dec.id)}
-                  disabled={stepIndex >= steps.length}
-                  className="relative flex flex-col items-center justify-center p-3 h-24 rounded-2xl transition-all duration-150 active:scale-95 bg-white border-b-4 hover:-translate-y-1"
-                  style={{
-                    borderColor: isWrong ? '#ef4444' : dec.color,
-                    boxShadow: isWrong ? '0 0 15px rgba(239,68,68,0.5)' : '0 4px 10px rgba(0,0,0,0.05)',
-                    transform: isWrong ? 'translateX(-4px)' : 'none',
-                    animation: isWrong ? 'shake 0.3s ease' : 'none',
-                  }}
-                >
-                  <span className="text-3xl mb-1 drop-shadow-sm">{dec.emoji}</span>
-                  <span className="text-[10px] font-bold text-stone-700 leading-tight text-center">{dec.id}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <button
+          onClick={onCancel}
+          className="text-xs font-semibold text-stone-400 hover:text-stone-600 transition-colors"
+        >
+          Volver [ESC]
+        </button>
       </div>
 
       <style>{`

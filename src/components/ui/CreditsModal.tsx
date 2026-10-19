@@ -1,53 +1,91 @@
 'use client';
 
 import React from 'react';
-import { X, Heart, Sparkles } from 'lucide-react';
+import { CandyModal, CandyButton, CandyCard } from '@/components/ui/design-system';
+import { Heart, Sparkles, Code2, Palette, Volume2 } from 'lucide-react';
 
 interface CreditsModalProps {
   onClose: () => void;
 }
 
 export const CreditsModal: React.FC<CreditsModalProps> = ({ onClose }) => {
+  // ─── NOMBRE DEL INSTITUTO (Fácil de editar) ─────────────────────────────────
+  const NOMBRE_INSTITUTO = 'Instituto Técnico La Falda (ITLF)';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 select-none">
-      <div className="relative flex flex-col items-center max-w-md w-full rounded-3xl border-4 border-pink-300 bg-white/98 p-8 shadow-2xl text-center">
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        <div className="text-4xl mb-2 animate-bounce">🧁</div>
-        <h2 className="text-2xl font-black text-bakery-choco mb-1">
-          Azúcar Rush
-        </h2>
-        <p className="text-xs text-pink-600 font-bold uppercase tracking-wider mb-6">
-          Juego 3D en Primera Persona de Pastelería
-        </p>
-
-        <div className="space-y-4 text-xs text-slate-600 mb-8 w-full text-left bg-pink-50/50 p-4 rounded-2xl border border-pink-100">
-          <div>
-            <div className="font-bold text-slate-800">Diseño & Concepto Original:</div>
-            <div>Inspirado en la emoción y rapidez de los juegos de cocina tipo Overcooked, adaptado a 3D inmersivo.</div>
-          </div>
-          <div>
-            <div className="font-bold text-slate-800">Stack Tecnológico:</div>
-            <div>Next.js, TypeScript, Three.js, React Three Fiber (@react-three/fiber), @react-three/drei, Tailwind CSS.</div>
-          </div>
-          <div>
-            <div className="font-bold text-slate-800">Efectos Sonoros y Música:</div>
-            <div>Sintetizador procedural en tiempo real con Web Audio API.</div>
+    <CandyModal
+      isOpen
+      onClose={onClose}
+      title="Azúcar Rush"
+      subtitle="Pastelería en primera persona — Proyecto educativo del ITLF"
+      icon={<div className="text-3xl animate-bounce">🧁</div>}
+      maxWidth="md"
+      footer={
+        <CandyButton variant="primary" size="md" fullWidth onClick={onClose}>
+          Cerrar Créditos
+        </CandyButton>
+      }
+    >
+      <div className="space-y-4">
+        {/* Sección destacada del Instituto: MISMO ESTILO DE TARJETA QUE EN HOME */}
+        <div className="flex flex-col items-center">
+          <div
+            className="flex items-center gap-3 bg-slate-950/85 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-2xl shadow-md transition-transform hover:scale-[1.02]"
+            title={NOMBRE_INSTITUTO}
+          >
+            <img
+              src="/img/logoNav.webp"
+              alt={NOMBRE_INSTITUTO}
+              className="h-8 w-auto object-contain shrink-0"
+            />
+            <div className="flex flex-col text-left">
+              <span className="text-[10px] font-bold text-amber-300 tracking-wider uppercase">
+                Proyecto realizado en
+              </span>
+              <span className="text-xs font-black text-white">
+                {NOMBRE_INSTITUTO}
+              </span>
+            </div>
           </div>
         </div>
 
-        <button
-          onClick={onClose}
-          className="w-full py-3 rounded-2xl font-black text-sm bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-lg hover:brightness-105 active:scale-95 transition-all"
-        >
-          Cerrar
-        </button>
+        {/* Tarjetas informativas con CandyCard */}
+        <CandyCard variant="cream" className="p-4 space-y-3">
+          <div className="flex items-start gap-2.5">
+            <Palette className="w-4 h-4 text-pink-500 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-black text-xs text-[#451a03]">Concepto & Experiencia:</div>
+              <div className="text-xs text-stone-600 mt-0.5 leading-snug">
+                Pastelería en primera persona que combina la adrenalina y rapidez de los clásicos de cocina con gráficos 3D envolventes y controles intuitivos.
+              </div>
+            </div>
+          </div>
+
+          <div className="h-px bg-pink-100" />
+
+          <div className="flex items-start gap-2.5">
+            <Code2 className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-black text-xs text-[#451a03]">Desarrollo & Tecnologías:</div>
+              <div className="text-xs text-stone-600 mt-0.5 leading-snug">
+                Construido con Next.js 14, React, Three.js, React Three Fiber, React Three Drei y Tailwind CSS.
+              </div>
+            </div>
+          </div>
+
+          <div className="h-px bg-pink-100" />
+
+          <div className="flex items-start gap-2.5">
+            <Volume2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-black text-xs text-[#451a03]">Música y Efectos Sonoros:</div>
+              <div className="text-xs text-stone-600 mt-0.5 leading-snug">
+                Sintetizador procedural en tiempo real mediante Web Audio API para una respuesta instantánea y liviana.
+              </div>
+            </div>
+          </div>
+        </CandyCard>
       </div>
-    </div>
+    </CandyModal>
   );
 };

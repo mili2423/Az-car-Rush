@@ -14,10 +14,12 @@ import {
   ProductId,
   RECIPES,
   TrayState,
+  DEFAULT_PRODUCT_DECORATIONS,
 } from '@/types/game';
 import { LEVELS } from '@/utils/levels';
 import { loadGameProgress, saveGameProgress } from '@/utils/storage';
 import { sounds } from '@/utils/audio';
+import { requestGamePointerLock, releaseGamePointerLock, isPointerLocked } from '@/utils/mouseManager';
 
 // ============================================================================
 // COMPONENTES DE INTERFAZ 2D (HUD, Modales, Pantallas y Menús)
@@ -29,10 +31,12 @@ import { IntroCutscene } from '@/components/ui/IntroCutscene';
 import { HowToPlayModal } from '@/components/ui/HowToPlayModal';
 import { CreditsModal } from '@/components/ui/CreditsModal';
 import { MixerMinigame } from '@/components/ui/MixerMinigame';
-import { DecorationMenu } from '@/components/ui/DecorationMenu';
+import { DecorationMinigame } from '@/components/ui/DecorationMinigame';
 import { LevelSummaryModal } from '@/components/ui/LevelSummaryModal';
 import { GameWinModal } from '@/components/ui/GameWinModal';
 import { MiniTutorialModal } from '@/components/ui/MiniTutorialModal';
+import { PauseModal } from '@/components/ui/PauseModal';
+import { ShopModal } from '@/components/ui/ShopModal';
 
 // ============================================================================
 // ESCENA 3D (Three.js / React Three Fiber con SSR desactivado)
@@ -53,6 +57,7 @@ export default function GamePage() {
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
   // Estados para abrir/cerrar modales
+  const [isPaused, setIsPaused] = useState<boolean>(false);
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
   const [showCredits, setShowCredits] = useState<boolean>(false);
@@ -174,6 +179,13 @@ export default function GamePage() {
       const patiencePerRecipe = Math.round(basePatiencePerRecipe * levelPatienceMultiplier);
       const totalPatience = patiencePerRecipe * orderCount + 20;
 
+      const requestedDecorations: Record<string, string[]> = {};
+      items.forEach(p => {
+        if (RECIPES[p].requiresDecoration) {
+          requestedDecorations[p] = DEFAULT_PRODUCT_DECORATIONS[p] || ['glaze_pink', 'sprinkles'];
+        }
+      });
+
       const order: CustomerOrder = {
         id: `cust-${Date.now()}`,
         customerType: chosenType,
@@ -184,6 +196,7 @@ export default function GamePage() {
         totalPrice,
         maxPatienceSeconds: totalPatience,
         currentPatienceSeconds: totalPatience,
+        requestedDecorations,
         createdAt: Date.now(),
       };
 
@@ -225,10 +238,7 @@ export default function GamePage() {
       setScreen('playing');
       sounds.startBGM();
 
-      setTimeout(() => {
-        const canvas = document.querySelector('canvas');
-        canvas?.requestPointerLock?.();
-      }, 200);
+      requestGamePointerLock();
     },
     [progress.upgrades, spawnCustomer]
   );
@@ -259,20 +269,18 @@ export default function GamePage() {
       return '4. Espera a que suene la campana en el horno...';
     }
     if (tray.type === 'baked') {
-      const rec = RECIPES[tray.recipeId];
-      if (rec?.requiresDecoration) {
-        return '5. Ve a la mesa de decoración y presiona [E] para decorarlo';
-      }
-      return '6. Ve al mostrador frente al cliente y presiona [E] para entregar';
+      // El panel "EN TUS MANOS" ya indica si llevar a Decoración o al Mostrador
+      return undefined;
     }
     if (tray.type === 'finished') {
-      return '6. Ve al mostrador frente al cliente y presiona [E] para entregar el pedido';
+      // El panel "EN TUS MANOS" ya indica que está listo para entregar
+      return undefined;
     }
     if (tray.type === 'burnt') {
       return 'El postre se quemó. Ve al tacho de basura y presiona [E] para vaciarlo';
     }
-    return currentLevelDef.tutorialSteps?.[0];
-  }, [currentLevelNumber, currentOrder, tray, ovenState, currentLevelDef]);
+    return undefined;
+  }, [currentLevelNumber, currentOrder, tray, ovenState]);
 
   // --------------------------------------------------------------------------
   // 9. FLUJO DE INICIO Y TUTORIAL (A PARTIR DEL DÍA 2 NO SE MUESTRA)
@@ -313,10 +321,101 @@ export default function GamePage() {
   };
 
   // --------------------------------------------------------------------------
+  // 9b. SALIR AL HOME DESDE PAUSA (LIMPIA LA PARTIDA Y PRESERVA PROGRESO)
+  // --------------------------------------------------------------------------
+  const handleReturnHome = useCallback(() => {
+    // 1. Frenar sonidos y música de la partida
+    sounds.stopBGM();
+
+    // 2. Liberar el control del mouse (pointer lock) y restaurar cursor normal
+    releaseGamePointerLock();
+    setIsLocked(false);
+    setIsPaused(false);
+
+    // 3. Frenar minijuegos y limpiar estados interactivos
+    setIsMixerActive(false);
+    setMixingProgress(null);
+    setDecoratingRecipe(null);
+    setFocusedObject(null);
+    setIsAwaitingNextCustomer(false);
+
+    // 4. Limpiar estado de la partida en curso (pedidos, clientes, bandeja, horno, vidas y puntos del día)
+    setCurrentOrder(null);
+    setTray({ type: 'empty' });
+    setOvenState({
+      isCooking: false,
+      recipeId: null,
+      progress: 0,
+      burnProgress: 0,
+      isReady: false,
+      isBurnt: false,
+    });
+    setMoney(0);
+    setScore(0);
+    setOrdersDeliveredCount(0);
+
+    // 5. Desmontar escena 3D y volver al home (manteniendo el progreso en Supabase/storage intacto)
+    setScreen('home');
+  }, []);
+
+  // --------------------------------------------------------------------------
+  // 9c. ESTADO ÚNICO CENTRALIZADO: "EN MENÚ" vs "JUGANDO"
+  // --------------------------------------------------------------------------
+  const isMenuOpen =
+    screen !== 'playing' ||
+    isPaused ||
+    showTutorial ||
+    showHowToPlay ||
+    showCredits ||
+    showShop ||
+    decoratingRecipe !== null;
+
+  // Si estamos en menú, asegurar puntero liberado inmediatamente
+  useEffect(() => {
+    if (isMenuOpen) {
+      releaseGamePointerLock();
+      setIsLocked(false);
+    }
+  }, [isMenuOpen]);
+
+  // Sincronización de eventos de Pointer Lock y tecla ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // Si está en juego activo (sin menú abierto), pausar
+        if (screen === 'playing' && !isMenuOpen) {
+          e.preventDefault();
+          releaseGamePointerLock();
+          setIsLocked(false);
+          setIsPaused(true);
+        }
+      }
+    };
+
+    const handlePointerLockChange = () => {
+      const isLockedNow = isPointerLocked();
+      setIsLocked(isLockedNow);
+
+      // Si el navegador liberó el lock (ej. el jugador apretó ESC) y estábamos jugando, pausar
+      if (!isLockedNow && screen === 'playing' && !isMenuOpen) {
+        setIsPaused(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('pointerlockchange', handlePointerLockChange);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('pointerlockchange', handlePointerLockChange);
+    };
+  }, [screen, isMenuOpen]);
+
+  // --------------------------------------------------------------------------
   // 10. BUCLE PRINCIPAL DEL JUEGO (RELOJ, PACIENCIA DE CLIENTES Y HORNO)
   // --------------------------------------------------------------------------
   useEffect(() => {
-    if (screen !== 'playing') return;
+    if (screen !== 'playing' || isPaused) return;
 
     const interval = setInterval(() => {
       // A. Cuenta regresiva del nivel
@@ -396,7 +495,7 @@ export default function GamePage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [screen, currentLevelDef, money, progress.upgrades, spawnCustomer]);
+  }, [screen, isPaused, currentLevelDef, money, progress.upgrades, spawnCustomer]);
 
   // --------------------------------------------------------------------------
   // 11. EVALUACIÓN DE FIN DE NIVEL
@@ -610,22 +709,22 @@ export default function GamePage() {
       return;
     }
 
-    // D. Mesa de Decoración
+    // D. Mesa de Decoración (Abre el Minijuego Interactivo)
     if (focusedObject === 'decorating') {
       if (tray.type === 'baked') {
         const rec = RECIPES[tray.recipeId];
         if (rec.requiresDecoration) {
           sounds.playPickup();
-          // Abre el minijuego de decoración
+          releaseGamePointerLock();
+          setIsLocked(false);
           setDecoratingRecipe(tray.recipeId);
-          document.exitPointerLock?.();
         } else {
-          showToast(`${rec.name} no requiere decoración. ¡Entrégalo al cliente!`, 'info');
+          showToast(`${rec.name} no requiere decoración. ¡Llévalo al mostrador!`, 'info');
         }
       } else if (tray.type === 'finished') {
         showToast('Ya está decorado. Llévalo al mostrador para entregarlo al cliente [E].', 'info');
       } else {
-        showToast('Trae un postre horneado que requiera decoración (cupcake, donut, tarta, torta).', 'info');
+        showToast('Trae un postre horneado que requiera decoración (donut, cupcake, tarta, torta).', 'info');
       }
       return;
     }
@@ -641,19 +740,22 @@ export default function GamePage() {
 
           const isFast = currentOrder.currentPatienceSeconds / currentOrder.maxPatienceSeconds > 0.6;
           const isDecorated = tray.type === 'finished';
-          const bonusDecor = isDecorated ? 50 : 0;
-          const pointsEarned = 100 + (isFast ? 50 : 0) + bonusDecor;
-          const revenueEarned = recipe.price;
+          const isIncorrect = tray.type === 'finished' && tray.isIncorrectDecor;
+          const bonusDecor = isDecorated && !isIncorrect ? 60 : isIncorrect ? -40 : 0;
+          const pointsEarned = Math.max(20, 100 + (isFast ? 50 : 0) + bonusDecor);
+          const revenueEarned = isIncorrect ? Math.round(recipe.price * 0.75) : recipe.price;
 
           setMoney(m => m + revenueEarned);
           setScore(s => s + pointsEarned);
           setOrdersDeliveredCount(c => c + 1);
           setTray({ type: 'empty' });
 
-          if (isDecorated || !recipe.requiresDecoration) {
+          if (isIncorrect) {
+            showToast(`${recipe.name} entregado, pero la decoración era incorrecta (-40 pts)`, 'warning');
+          } else if (isDecorated || !recipe.requiresDecoration) {
             showToast(`${recipe.name} entregado con éxito. +$${revenueEarned} (+${pointsEarned} pts)`, 'success');
           } else {
-            showToast(`${recipe.name} entregado. +$${revenueEarned} (Tip: decóralo para +50 pts)`, 'success');
+            showToast(`${recipe.name} entregado sin decorar. +$${revenueEarned} (Tip: decóralo para +60 pts)`, 'info');
           }
 
           const remainingItems = [...currentOrder.items];
@@ -778,6 +880,7 @@ export default function GamePage() {
             onInteract={handleInteract}
             isLocked={isLocked}
             setIsLocked={setIsLocked}
+            isMenuOpen={isMenuOpen}
           />
 
           <Crosshair
@@ -804,8 +907,9 @@ export default function GamePage() {
             isMuted={isMuted}
             onToggleMute={toggleMute}
             onPause={() => {
-              document.exitPointerLock?.();
+              releaseGamePointerLock();
               setIsLocked(false);
+              setIsPaused(true);
             }}
             toast={toast}
             mixingProgress={mixingProgress}
@@ -815,30 +919,32 @@ export default function GamePage() {
           />
 
           {decoratingRecipe && (
-            <DecorationMenu
-              recipeId={decoratingRecipe}
-              onDecorate={(isCorrect: boolean) => {
-                if (isCorrect) {
-                  setTray({ type: 'finished', recipeId: decoratingRecipe });
-                } else {
-                  // Decoración incorrecta: se marca como finished pero con penalización en score
-                  setTray({ type: 'finished', recipeId: decoratingRecipe });
-                  setScore(s => Math.max(0, s - 80));
-                  showToast('Decoración incorrecta. El cliente lo notará (-80 pts)', 'warning');
-                }
+            <DecorationMinigame
+              productId={decoratingRecipe}
+              requestedDecorations={
+                currentOrder?.requestedDecorations?.[decoratingRecipe] ||
+                DEFAULT_PRODUCT_DECORATIONS[decoratingRecipe] ||
+                ['glaze_pink', 'sprinkles']
+              }
+              onFinish={(applied, isCorrect) => {
+                const rec = RECIPES[decoratingRecipe];
+                setTray({
+                  type: 'finished',
+                  recipeId: decoratingRecipe,
+                  decorations: applied,
+                  isIncorrectDecor: !isCorrect,
+                });
                 setDecoratingRecipe(null);
-                // Volver a bloquear el puntero
-                setTimeout(() => {
-                  const canvas = document.querySelector('canvas');
-                  canvas?.requestPointerLock?.();
-                }, 100);
+                if (isCorrect) {
+                  showToast(`¡${rec.name} decorado a la perfección! Llévalo al mostrador [E]`, 'success');
+                } else {
+                  showToast('Decoración incorrecta. El cliente lo notará al recibirlo.', 'warning');
+                }
+                // El pointer lock se pide desde DecorationMinigame directamente en el click
               }}
               onCancel={() => {
                 setDecoratingRecipe(null);
-                setTimeout(() => {
-                  const canvas = document.querySelector('canvas');
-                  canvas?.requestPointerLock?.();
-                }, 100);
+                // El pointer lock se pide desde DecorationMinigame directamente en el click
               }}
             />
           )}
@@ -896,6 +1002,27 @@ export default function GamePage() {
           upgrades={progress.upgrades}
           onBuyUpgrade={handleBuyUpgrade}
           onClose={() => setShowShop(false)}
+        />
+      )}
+      {isPaused && (
+        <PauseModal
+          isOpen={isPaused}
+          onResume={() => {
+            setIsPaused(false);
+            requestGamePointerLock();
+          }}
+          onRetry={() => {
+            setIsPaused(false);
+            startLevel(currentLevelNumber);
+          }}
+          onOpenRecipes={() => {
+            setIsPaused(false);
+            setShowHowToPlay(true);
+          }}
+          onReturnHome={handleReturnHome}
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
+          levelNumber={currentLevelNumber}
         />
       )}
     </main>
