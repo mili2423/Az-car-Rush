@@ -10,6 +10,7 @@ import { sounds } from '@/utils/audio';
 import { X, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { CandyCard, CandyBadge, CandyButton } from '@/components/ui/design-system';
 import { releaseGamePointerLock, requestGamePointerLock } from '@/utils/mouseManager';
+import { resetInput } from '@/utils/inputManager';
 
 interface DecorationMinigameProps {
   productId: ProductId;
@@ -79,21 +80,22 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
 
   const totalSteps = requestedDecorations.length > 0 ? requestedDecorations.length : 2;
 
-  // Liberar el cursor inmediatamente al montar el minijuego
+  // Liberar el cursor y resetear inputs inmediatamente al montar el minijuego
   useEffect(() => {
     releaseGamePointerLock();
+    resetInput();
     // Limpiar timers al desmontar
     return () => {
       if (autoFinishTimerRef.current) clearTimeout(autoFinishTimerRef.current);
+      resetInput();
     };
   }, []);
 
-  // Manejar tecla Escape para cancelar (Escape es un gesto de usuario válido para pedir lock después)
+  // Manejar tecla Escape para cancelar
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        // No pedimos pointer lock aquí porque Escape lo rechaza automáticamente.
-        // La capa "Haz clic para jugar" se encarga cuando el usuario hace click.
+        resetInput();
         onCancel();
       }
     };
@@ -139,13 +141,14 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
         }
       }, 300);
 
-      // Auto-salida tras 1s — el jugador también puede clickear el banner para salir antes
+      // Auto-salida tras 1.2s — el jugador también puede clickear el banner para salir antes
       autoFinishTimerRef.current = setTimeout(() => {
         if (!finishedRef.current) {
           finishedRef.current = true;
+          resetInput();
           onFinish(newApplied, isFinalCorrect);
         }
-      }, 1000);
+      }, 1200);
     }
   };
 
@@ -218,7 +221,7 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            // Pedimos el pointer lock ANTES de llamar onCancel (gesto directo del usuario).
+            resetInput();
             requestGamePointerLock();
             onCancel();
           }}
@@ -262,6 +265,7 @@ export const DecorationMinigame: React.FC<DecorationMinigameProps> = ({
                 clearTimeout(autoFinishTimerRef.current);
                 autoFinishTimerRef.current = null;
               }
+              resetInput();
               // Gesto directo del usuario: pedimos pointer lock antes de notificar al padre
               requestGamePointerLock();
               onFinish(finalAppliedRef.current, finalIsCorrectRef.current);

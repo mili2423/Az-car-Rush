@@ -20,6 +20,7 @@ import { LEVELS } from '@/utils/levels';
 import { loadGameProgress, saveGameProgress } from '@/utils/storage';
 import { sounds } from '@/utils/audio';
 import { requestGamePointerLock, releaseGamePointerLock, isPointerLocked } from '@/utils/mouseManager';
+import { resetInput } from '@/utils/inputManager';
 
 // ============================================================================
 // COMPONENTES DE INTERFAZ 2D (HUD, Modales, Pantallas y Menús)
@@ -370,11 +371,12 @@ export default function GamePage() {
     showShop ||
     decoratingRecipe !== null;
 
-  // Si estamos en menú, asegurar puntero liberado inmediatamente
+  // Si estamos en menú, asegurar puntero liberado inmediatamente y resetear inputs
   useEffect(() => {
     if (isMenuOpen) {
       releaseGamePointerLock();
       setIsLocked(false);
+      resetInput();
     }
   }, [isMenuOpen]);
 
@@ -387,6 +389,7 @@ export default function GamePage() {
           e.preventDefault();
           releaseGamePointerLock();
           setIsLocked(false);
+          resetInput();
           setIsPaused(true);
         }
       }
@@ -395,10 +398,8 @@ export default function GamePage() {
     const handlePointerLockChange = () => {
       const isLockedNow = isPointerLocked();
       setIsLocked(isLockedNow);
-
-      // Si el navegador liberó el lock (ej. el jugador apretó ESC) y estábamos jugando, pausar
-      if (!isLockedNow && screen === 'playing' && !isMenuOpen) {
-        setIsPaused(true);
+      if (!isLockedNow) {
+        resetInput();
       }
     };
 
@@ -927,6 +928,7 @@ export default function GamePage() {
                 ['glaze_pink', 'sprinkles']
               }
               onFinish={(applied, isCorrect) => {
+                resetInput();
                 const rec = RECIPES[decoratingRecipe];
                 setTray({
                   type: 'finished',
@@ -940,11 +942,10 @@ export default function GamePage() {
                 } else {
                   showToast('Decoración incorrecta. El cliente lo notará al recibirlo.', 'warning');
                 }
-                // El pointer lock se pide desde DecorationMinigame directamente en el click
               }}
               onCancel={() => {
+                resetInput();
                 setDecoratingRecipe(null);
-                // El pointer lock se pide desde DecorationMinigame directamente en el click
               }}
             />
           )}
@@ -989,37 +990,61 @@ export default function GamePage() {
       {showTutorial && (
         <MiniTutorialModal
           onComplete={handleTutorialComplete}
-          onClose={() => setShowTutorial(false)}
+          onClose={() => {
+            resetInput();
+            setShowTutorial(false);
+          }}
         />
       )}
       {showHowToPlay && (
-        <HowToPlayModal onClose={() => setShowHowToPlay(false)} />
+        <HowToPlayModal
+          onClose={() => {
+            resetInput();
+            setShowHowToPlay(false);
+          }}
+        />
       )}
-      {showCredits && <CreditsModal onClose={() => setShowCredits(false)} />}
+      {showCredits && (
+        <CreditsModal
+          onClose={() => {
+            resetInput();
+            setShowCredits(false);
+          }}
+        />
+      )}
       {showShop && (
         <ShopModal
           totalCoins={progress.totalCoins}
           upgrades={progress.upgrades}
           onBuyUpgrade={handleBuyUpgrade}
-          onClose={() => setShowShop(false)}
+          onClose={() => {
+            resetInput();
+            setShowShop(false);
+          }}
         />
       )}
       {isPaused && (
         <PauseModal
           isOpen={isPaused}
           onResume={() => {
+            resetInput();
             setIsPaused(false);
             requestGamePointerLock();
           }}
           onRetry={() => {
+            resetInput();
             setIsPaused(false);
             startLevel(currentLevelNumber);
           }}
           onOpenRecipes={() => {
+            resetInput();
             setIsPaused(false);
             setShowHowToPlay(true);
           }}
-          onReturnHome={handleReturnHome}
+          onReturnHome={() => {
+            resetInput();
+            handleReturnHome();
+          }}
           isMuted={isMuted}
           onToggleMute={toggleMute}
           levelNumber={currentLevelNumber}

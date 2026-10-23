@@ -8,7 +8,7 @@ import { Customer3D } from './Customer3D';
 import { PlayerController } from './PlayerController';
 import { HeldItem3D } from './HeldItem3D';
 import { CustomerOrder, OvenState, TrayState } from '@/types/game';
-import { requestGamePointerLock } from '@/utils/mouseManager';
+import { requestGamePointerLock, MAIN_CANVAS_ID } from '@/utils/mouseManager';
 
 interface BakerySceneProps {
   ovenState: OvenState;
@@ -42,9 +42,13 @@ export const BakeryScene: React.FC<BakerySceneProps> = ({
   return (
     <div className="relative w-full h-full select-none">
       <Canvas
+        id={MAIN_CANVAS_ID}
         shadows
         camera={{ position: [0, 1.7, 0], fov: 72 }}
         className="w-full h-full cursor-crosshair"
+        onCreated={({ gl }) => {
+          gl.domElement.id = MAIN_CANVAS_ID;
+        }}
       >
         <Suspense fallback={null}>
           <BakeryRoom />

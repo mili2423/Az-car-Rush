@@ -3,14 +3,19 @@
  * ÚNICA fuente de verdad autorizada para solicitar o liberar el bloqueo del mouse.
  */
 
+export const MAIN_CANVAS_ID = 'azucar-rush-main-canvas';
+
 /**
- * Solicita el bloqueo del mouse de forma segura sobre el canvas del juego.
+ * Solicita el bloqueo del mouse de forma segura sobre el canvas principal del juego.
  * Solo debe ser llamado ante un gesto explícito del usuario (clicks en botones de continuar, etc.)
  */
 export function requestGamePointerLock(targetCanvas?: HTMLCanvasElement | null): boolean {
   if (typeof window === 'undefined' || typeof document === 'undefined') return false;
 
-  const canvas = targetCanvas || (document.querySelector('canvas') as HTMLCanvasElement | null);
+  const canvas =
+    targetCanvas ||
+    (document.getElementById(MAIN_CANVAS_ID) as HTMLCanvasElement | null) ||
+    (document.querySelector('canvas') as HTMLCanvasElement | null);
   if (!canvas) return false;
 
   try {

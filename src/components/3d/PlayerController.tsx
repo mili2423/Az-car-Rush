@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import { PointerLockControls as ThreePointerLockControls } from 'three-stdlib';
-import { Vector3, Vector2, Raycaster, Object3D } from 'three';
+import { Vector3, Vector2, Raycaster, Object3D, Euler } from 'three';
 import { sounds } from '@/utils/audio';
+import { resetInput, getRealMovementState, onInputReset } from '@/utils/inputManager';
 
 interface PlayerControllerProps {
   walkSpeedBonus: number;
@@ -14,7 +15,7 @@ interface PlayerControllerProps {
   enabled?: boolean;
 }
 
-/** Resetea completamente el estado de teclas de movimiento. */
+/** Resetea el estado interno de teclas de movimiento. */
 function resetMoveState(ms: { forward: boolean; backward: boolean; left: boolean; right: boolean }) {
   ms.forward = false;
   ms.backward = false;
@@ -39,20 +40,46 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
   const justLockedTime = useRef(0);
   const controlsRef = useRef<ThreePointerLockControls | null>(null);
 
-  // Initial camera position & view
+  // Cámara: almacenar transformación previa a entrar en minijuegos o pausas para restaurar sin saltos
+  const savedCameraPos = useRef<Vector3 | null>(null);
+  const savedCameraRot = useRef<Euler | null>(null);
+  const isFirstMount = useRef(true);
+
+  // Posición inicial de cámara (solo una vez en la carga inicial)
   useEffect(() => {
-    camera.position.set(0, 1.7, 0); // Natural eye level
-    camera.lookAt(0, 1.7, -4); // Facing back counters
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      camera.position.set(0, 1.7, 0); // Altura de ojos natural
+      camera.lookAt(0, 1.7, -4); // Mirando al mesón de cocina
+    }
   }, [camera]);
 
-  // Controles de puntero nativos de Three.js (SIN listener global en document)
+  // Suscripción al reseteo centralizado global de inputs (blur, visibilitychange, modales, etc.)
+  useEffect(() => {
+    const unsubscribe = onInputReset(() => {
+      resetMoveState(moveState.current);
+      if (wasMovingRef.current) {
+        wasMovingRef.current = false;
+        onMoveChange(false);
+      }
+    });
+    return unsubscribe;
+  }, [onMoveChange]);
+
+  // Gestión del ciclo de vida de los controles y preservación de cámara
   useEffect(() => {
     if (!enabled) {
-      // Al desactivar: limpiar moveState para evitar teclas fantasma
+      // 1. Guardar posición y rotación actual de la cámara
+      savedCameraPos.current = camera.position.clone();
+      savedCameraRot.current = camera.rotation.clone();
+
+      // 2. Resetear TODO el input de movimiento
+      resetInput();
       resetMoveState(moveState.current);
       wasMovingRef.current = false;
       onMoveChange(false);
 
+      // 3. Desconectar controles y liberar puntero
       if (controlsRef.current) {
         controlsRef.current.disconnect();
         controlsRef.current.dispose();
@@ -62,18 +89,31 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
       return;
     }
 
+    // Al reactivar los controles: restaurar cámara de forma limpia si teníamos posición guardada
+    if (savedCameraPos.current) {
+      camera.position.copy(savedCameraPos.current);
+    }
+    if (savedCameraRot.current) {
+      camera.rotation.copy(savedCameraRot.current);
+    }
+
+    // Resetear inmediatamente cualquier tecla residual
+    resetInput();
+    resetMoveState(moveState.current);
+
+    // Instanciar controles de puntero sobre el canvas principal
     const controls = new ThreePointerLockControls(camera, gl.domElement);
     controlsRef.current = controls;
 
     const onLock = () => {
       justLockedTime.current = performance.now();
-      // Al recuperar el foco: resetear teclas para estado limpio basado en el teclado real
+      resetInput();
       resetMoveState(moveState.current);
       setIsLocked(true);
     };
 
     const onUnlock = () => {
-      // Al perder el lock: resetear siempre para evitar movimiento residual
+      resetInput();
       resetMoveState(moveState.current);
       wasMovingRef.current = false;
       setIsLocked(false);
@@ -93,63 +133,23 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
     };
   }, [enabled, camera, gl.domElement, setIsLocked, onMoveChange]);
 
-  // Keyboard and mouse interaction listeners
+  // Listeners de teclado y mouse para interacción activa
   useEffect(() => {
     if (!enabled) {
-      // Garantía extra: limpiar teclas si el efecto anterior no lo hizo a tiempo
+      resetInput();
       resetMoveState(moveState.current);
       return;
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.code) {
-        case 'KeyW':
-        case 'ArrowUp':
-          moveState.current.forward = true;
-          break;
-        case 'KeyS':
-        case 'ArrowDown':
-          moveState.current.backward = true;
-          break;
-        case 'KeyA':
-        case 'ArrowLeft':
-          moveState.current.left = true;
-          break;
-        case 'KeyD':
-        case 'ArrowRight':
-          moveState.current.right = true;
-          break;
-        case 'KeyE':
-          if (isLocked) {
-            onInteract();
-          }
-          break;
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      switch (e.code) {
-        case 'KeyW':
-        case 'ArrowUp':
-          moveState.current.forward = false;
-          break;
-        case 'KeyS':
-        case 'ArrowDown':
-          moveState.current.backward = false;
-          break;
-        case 'KeyA':
-        case 'ArrowLeft':
-          moveState.current.left = false;
-          break;
-        case 'KeyD':
-        case 'ArrowRight':
-          moveState.current.right = false;
-          break;
+      if (e.code === 'KeyE') {
+        if (isLocked) {
+          onInteract();
+        }
       }
     };
 
     const handleMouseDown = (e: MouseEvent) => {
-      // Left click interacts only if locked and enabled and not the initial lock click
       if (isLocked && enabled && e.button === 0) {
         if (performance.now() - justLockedTime.current > 150) {
           onInteract();
@@ -157,63 +157,30 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
       }
     };
 
-    /**
-     * Reseteo de seguridad: cuando la ventana pierde el foco, se pierden los keyup.
-     * Limpiamos todas las teclas para que el personaje no camine solo al volver.
-     */
-    const handleBlur = () => {
-      resetMoveState(moveState.current);
-      wasMovingRef.current = false;
-      onMoveChange(false);
-    };
-
-    /**
-     * Igual que blur pero para cambios de pestaña (Alt+Tab en algunos navegadores
-     * no dispara blur en window pero sí visibilitychange en document).
-     */
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        resetMoveState(moveState.current);
-        wasMovingRef.current = false;
-        onMoveChange(false);
-      }
-    };
-
-    /**
-     * Cuando el navegador libera el pointer lock (ej. el usuario apretó ESC,
-     * cambió de pestaña, o el juego abrió un modal), los keyup se pierden.
-     * Reseteamos el movimiento inmediatamente.
-     */
-    const handlePointerLockChange = () => {
-      if (!document.pointerLockElement) {
-        resetMoveState(moveState.current);
-        wasMovingRef.current = false;
-        onMoveChange(false);
-      }
-    };
-
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
     window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('blur', handleBlur);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('pointerlockchange', handlePointerLockChange);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('blur', handleBlur);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('pointerlockchange', handlePointerLockChange);
-      // Limpieza al desmontar/actualizar: ninguna tecla queda "colgada"
+      resetInput();
       resetMoveState(moveState.current);
     };
-  }, [enabled, isLocked, onInteract, onMoveChange]);
+  }, [enabled, isLocked, onInteract]);
 
-  // Movement & Raycasting frame loop
+  // Frame Loop de Movimiento & Raycasting
   useFrame((_, delta) => {
-    if (!enabled || !isLocked) return;
+    if (!enabled || !isLocked) {
+      if (wasMovingRef.current) {
+        wasMovingRef.current = false;
+        onMoveChange(false);
+      }
+      return;
+    }
+
+    // Consultar el estado REAL físico del teclado (garantiza cero teclas fantasma)
+    const realMove = getRealMovementState();
+    moveState.current = realMove;
 
     const baseSpeed = 4.8 * (1 + walkSpeedBonus);
     const speed = baseSpeed * Math.min(delta, 0.08);
@@ -245,7 +212,7 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
       const nextX = camera.position.x + dir.x * speed;
       const nextZ = camera.position.z + dir.z * speed;
 
-      // Room boundaries (comfortably inside walls)
+      // Límites perimetrales de la cocina
       const minX = -4.5;
       const maxX = 4.5;
       const minZ = -4.6;
@@ -254,26 +221,25 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
       let validX = nextX;
       let validZ = nextZ;
 
-      // Room clamp
       if (validX < minX) validX = minX;
       if (validX > maxX) validX = maxX;
       if (validZ < minZ) validZ = minZ;
       if (validZ > maxZ) validZ = maxZ;
 
-      // Furniture sliding collisions:
-      // Left counter (Ingredients shelf)
+      // Colisiones con mobiliario de la cocina
+      // 1. Estantería de ingredientes (izquierda)
       if (validX < -3.8 && validZ > -5.2 && validZ < -0.8) {
         validX = -3.8;
       }
-      // Right counter (Decorating station)
+      // 2. Mesa de decoración (derecha)
       if (validX > 3.8 && validZ > -5.2 && validZ < -0.8) {
         validX = 3.8;
       }
-      // Back table (Mixer & Oven)
+      // 3. Mesón trasero (batidora y horno)
       if (validZ < -4.2 && validX > -3.5 && validX < 3.5) {
         validZ = -4.2;
       }
-      // Front Service counter
+      // 4. Mostrador de atención a clientes (frente)
       if (validZ > 2.5 && validX > -3.5 && validX < 3.5) {
         validZ = 2.5;
       }
@@ -281,7 +247,7 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
       camera.position.x = validX;
       camera.position.z = validZ;
 
-      // Footstep sound
+      // Efecto sonoro de pasos rítmicos
       const now = performance.now();
       if (now - lastStepTime.current > 330) {
         sounds.playFootstep();
@@ -289,9 +255,9 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({
       }
     }
 
-    // Raycast for interactable under crosshair
+    // Raycast para interactuar con lo que esté en la mira central
     raycaster.current.setFromCamera(new Vector2(0, 0), camera);
-    raycaster.current.far = 4.0; // Comfortable reach distance
+    raycaster.current.far = 4.0;
 
     const intersects = raycaster.current.intersectObjects(scene.children, true);
     let hitInteractable: string | null = null;
