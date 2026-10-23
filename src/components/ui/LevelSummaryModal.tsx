@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { Star, Trophy, ArrowRight, ShoppingBag, RotateCcw, Award, DollarSign } from 'lucide-react';
+import { Star, Trophy, ArrowRight, ShoppingBag, RotateCcw, Award, DollarSign, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CandyButton, CandyCard, CandyBadge, CandyProgressBar } from '@/components/ui/design-system';
 import { sounds } from '@/utils/audio';
+import { PRODUCTS_UNLOCKED_ON_DAY } from '@/utils/levels';
+import { RECIPES } from '@/types/game';
 
 interface LevelSummaryModalProps {
   levelNumber: number;
@@ -70,6 +72,11 @@ export const LevelSummaryModal: React.FC<LevelSummaryModalProps> = ({
   }, [isVictory]);
 
   const moneyProgress = Math.min(100, (money / targetMoney) * 100);
+
+  const nextDayUnlocks = isVictory && levelNumber < 5 ? PRODUCTS_UNLOCKED_ON_DAY[levelNumber + 1] : null;
+  const nextUnlockNames = nextDayUnlocks && nextDayUnlocks.length > 0
+    ? nextDayUnlocks.map(id => RECIPES[id]?.name || id).join(' y ')
+    : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none bg-slate-950/60 backdrop-blur-sm">
@@ -176,6 +183,17 @@ export const LevelSummaryModal: React.FC<LevelSummaryModalProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Aviso de desbloqueo para el día siguiente */}
+        {nextUnlockNames && (
+          <div className="w-full mb-5 p-3 rounded-2xl bg-gradient-to-r from-pink-50 via-purple-50 to-pink-50 border-2 border-pink-300/80 shadow-xs flex items-center justify-center gap-2 text-center animate-pulse">
+            <Sparkles className="w-4 h-4 text-pink-500 shrink-0" />
+            <span className="text-xs font-black text-pink-900">
+              Mañana desbloquearás:{' '}
+              <span className="text-purple-700 underline decoration-pink-400 font-extrabold">{nextUnlockNames}</span>
+            </span>
+          </div>
+        )}
 
         {/* Botonera con CandyButton */}
         <div className="w-full space-y-2.5">

@@ -2,14 +2,27 @@
 
 import React from 'react';
 import { CandyModal, CandyButton, CandyCard, CandyBadge } from '@/components/ui/design-system';
-import { Navigation, MousePointer, Hand, Sparkles, ChefHat, BookOpen, Flame, UtensilsCrossed } from 'lucide-react';
-import { RECIPES, INGREDIENTS } from '@/types/game';
+import { Navigation, MousePointer, Hand, Sparkles, ChefHat, BookOpen, Flame, UtensilsCrossed, Lock } from 'lucide-react';
+import { RECIPES, INGREDIENTS, ProductId } from '@/types/game';
+import { PRODUCTS_UNLOCKED_ON_DAY } from '@/utils/levels';
 
 interface HowToPlayModalProps {
   onClose: () => void;
+  /** Día actual para saber qué productos mostrar desbloqueados vs bloqueados */
+  currentLevel?: number;
 }
 
-export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
+/** Devuelve el día en que se desbloquea un producto (o undefined si desde el inicio) */
+function getUnlockDay(productId: ProductId): number | undefined {
+  for (const [day, prods] of Object.entries(PRODUCTS_UNLOCKED_ON_DAY)) {
+    if ((prods as ProductId[]).includes(productId)) {
+      return Number(day);
+    }
+  }
+  return undefined;
+}
+
+export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose, currentLevel = 1 }) => {
   return (
     <CandyModal
       isOpen
@@ -86,7 +99,7 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
           </CandyCard>
         </div>
 
-        {/* 3. Libro de Recetas */}
+        {/* 3. Libro de Recetas con candados */}
         <div>
           <div className="flex items-center gap-2 mb-2.5">
             <CandyBadge variant="accent" size="sm">Paso 3</CandyBadge>
@@ -96,29 +109,70 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ onClose }) => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {Object.values(RECIPES).map(rec => (
-              <CandyCard
-                key={rec.id}
-                variant="cream"
-                className="p-3 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-2xl">{rec.emoji}</span>
-                  <div>
-                    <div className="text-xs font-black text-[#451a03]">{rec.name}</div>
-                    <div className="text-[10px] font-semibold text-stone-500 mt-0.5">
-                      {rec.ingredients.map(i => INGREDIENTS[i].name).join(' + ')}
+            {Object.values(RECIPES).map(rec => {
+              const unlockDay = getUnlockDay(rec.id as ProductId);
+              const isLocked = unlockDay !== undefined && unlockDay > currentLevel;
+              const isNew = unlockDay !== undefined && unlockDay === currentLevel;
+
+              if (isLocked) {
+                return (
+                  <CandyCard
+                    key={rec.id}
+                    variant="cream"
+                    className="p-3 flex items-center justify-between opacity-60 relative overflow-hidden"
+                    style={{ filter: 'grayscale(0.6)' }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center border border-stone-200">
+                        <Lock className="w-5 h-5 text-stone-400" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-black text-stone-500">Receta Bloqueada</div>
+                        <div className="text-[10px] font-bold text-stone-400 mt-0.5">
+                          Se desbloquea en el Día {unlockDay}
+                        </div>
+                      </div>
+                    </div>
+                    <CandyBadge variant="neutral" size="sm">🔒 Día {unlockDay}</CandyBadge>
+                  </CandyCard>
+                );
+              }
+
+              return (
+                <CandyCard
+                  key={rec.id}
+                  variant="cream"
+                  className="p-3 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl">{rec.emoji}</span>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="text-xs font-black text-[#451a03]">{rec.name}</div>
+                        {isNew && (
+                          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-pink-500 text-white uppercase tracking-wide">
+                            NUEVO
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] font-semibold text-stone-500 mt-0.5">
+                        {rec.ingredients.map(i => INGREDIENTS[i].name).join(' + ')}
+                      </div>
+                      {rec.requiresDecoration && (
+                        <div className="text-[9px] text-pink-600 font-bold mt-0.5">+ Decoración</div>
+                      )}
                     </div>
                   </div>
-                </div>
-                <CandyBadge variant="warning" size="sm">
-                  ${rec.price}
-                </CandyBadge>
-              </CandyCard>
-            ))}
+                  <CandyBadge variant="warning" size="sm">
+                    ${rec.price}
+                  </CandyBadge>
+                </CandyCard>
+              );
+            })}
           </div>
         </div>
       </div>
     </CandyModal>
   );
 };
+

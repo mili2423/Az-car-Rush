@@ -18,6 +18,7 @@ const DEFAULT_PROGRESS: GameProgress = {
   upgrades: DEFAULT_UPGRADES,
   introSeen: false,
   tutorialSeen: false,
+  seenUnlockPopups: [],
 };
 
 export const loadGameProgress = (): GameProgress => {
@@ -31,6 +32,7 @@ export const loadGameProgress = (): GameProgress => {
       ...parsed,
       upgrades: { ...DEFAULT_UPGRADES, ...(parsed.upgrades || {}) },
       starsPerLevel: parsed.starsPerLevel || {},
+      seenUnlockPopups: parsed.seenUnlockPopups || [],
     };
   } catch (err) {
     console.error('Failed to load progress from localStorage', err);

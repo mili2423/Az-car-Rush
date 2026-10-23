@@ -38,6 +38,8 @@ import { GameWinModal } from '@/components/ui/GameWinModal';
 import { MiniTutorialModal } from '@/components/ui/MiniTutorialModal';
 import { PauseModal } from '@/components/ui/PauseModal';
 import { ShopModal } from '@/components/ui/ShopModal';
+import { UnlockPopup } from '@/components/ui/UnlockPopup';
+import { PRODUCTS_UNLOCKED_ON_DAY } from '@/utils/levels';
 
 // ============================================================================
 // ESCENA 3D (Three.js / React Three Fiber con SSR desactivado)
@@ -115,6 +117,13 @@ export default function GamePage() {
   const [mixingProgress, setMixingProgress] = useState<number | null>(null);
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Shuffle-bag state: productos a repartir entre clientes del nivel actual
+  const shuffleBagRef = useRef<ProductId[]>([]);
+  const recentProductsRef = useRef<ProductId[]>([]);
+
+  // Cola de desbloqueos a mostrar antes de empezar el nivel
+  const [unlockQueue, setUnlockQueue] = useState<ProductId[]>([]);
+
   const showToast = useCallback((message: string, type: 'info' | 'success' | 'warning' = 'info') => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ message, type });
@@ -139,7 +148,40 @@ export default function GamePage() {
 
   // --------------------------------------------------------------------------
   // 6. GENERACIÓN DE CLIENTES Y CÁLCULO DE TIEMPO / PACIENCIA
+  //    Usa shuffle-bag para variedad: el mismo producto no sale más de 2 veces
+  //    seguidas y los productos nuevos del día pesan el doble.
   // --------------------------------------------------------------------------
+
+  /** Recarga el shuffle bag con los productos disponibles. Los productos new pesan doble. */
+  const refillShuffleBag = useCallback((levelDef: LevelDefinition) => {
+    const bag: ProductId[] = [];
+    const newOnes = levelDef.newProductsThisDay || [];
+    levelDef.availableProducts.forEach(p => {
+      bag.push(p);
+      if (newOnes.includes(p)) bag.push(p); // peso doble para los recién desbloqueados
+    });
+    // Fisher-Yates shuffle
+    for (let i = bag.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [bag[i], bag[j]] = [bag[j], bag[i]];
+    }
+    shuffleBagRef.current = bag;
+  }, []);
+
+  /** Saca un producto del shuffle bag sin repetir más de 2 veces seguidas. */
+  const drawFromBag = useCallback((levelDef: LevelDefinition): ProductId => {
+    if (shuffleBagRef.current.length === 0) refillShuffleBag(levelDef);
+
+    // Evitar repetición >2 veces seguidas
+    const recent = recentProductsRef.current;
+    let idx = shuffleBagRef.current.findIndex(p => !(recent.length >= 2 && recent[recent.length - 1] === p && recent[recent.length - 2] === p));
+    if (idx === -1) idx = 0;
+
+    const picked = shuffleBagRef.current.splice(idx, 1)[0];
+    recentProductsRef.current = [...recent.slice(-3), picked];
+    return picked;
+  }, [refillShuffleBag]);
+
   const spawnCustomer = useCallback(
     (levelDef: LevelDefinition) => {
       const customerNames = [
@@ -154,7 +196,6 @@ export default function GamePage() {
       const chosenType: CustomerType =
         levelDef.customerTypes[Math.floor(Math.random() * levelDef.customerTypes.length)];
 
-      const available = levelDef.availableProducts;
       const items: ProductId[] = [];
 
       const orderCount =
@@ -165,8 +206,7 @@ export default function GamePage() {
           : 1;
 
       for (let i = 0; i < orderCount; i++) {
-        const p = available[Math.floor(Math.random() * available.length)];
-        items.push(p);
+        items.push(drawFromBag(levelDef));
       }
 
       const basePrice = items.reduce((acc, p) => acc + RECIPES[p].price, 0);
@@ -204,19 +244,40 @@ export default function GamePage() {
       setCurrentOrder(order);
       sounds.playCustomerBell();
     },
-    []
+    [drawFromBag]
   );
 
   // --------------------------------------------------------------------------
-  // 7. INICIAR NIVEL
+  // 7. INICIAR NIVEL (con chequeo de desbloqueos nuevos)
   // --------------------------------------------------------------------------
   const startLevel = useCallback(
     (lvlNum: number) => {
       const def = LEVELS.find(l => l.levelNumber === lvlNum) || LEVELS[0];
       setCurrentLevelNumber(lvlNum);
 
+      // Verificar si hay productos desbloqueados este día que el jugador no vio aún
+      const newProds = PRODUCTS_UNLOCKED_ON_DAY[lvlNum] || [];
+      const alreadySeen = progress.seenUnlockPopups || [];
+      const toShow = newProds.filter(p => !alreadySeen.includes(p));
+      if (toShow.length > 0 && lvlNum > 1) {
+        // Marcar como vistos y mostrar el popup (el nivel empieza cuando el jugador cierra el popup)
+        const nextSeen = [...alreadySeen, ...toShow];
+        updateProgress({ seenUnlockPopups: nextSeen });
+        // Guardar estado del nivel para lanzarlo tras el popup
+        setCurrentLevelNumber(lvlNum);
+        setUnlockQueue(toShow);
+        // No iniciamos la partida todavía; se inicia en handleUnlockPopupClose
+        return;
+      }
+
+      // Sin popups pendientes: iniciar directamente
       const calculatedLives = 3 + (progress.upgrades.extraLives || 0);
       const calculatedTime = def.timeLimitSeconds + (progress.upgrades.extraTime || 0) * 20;
+
+      // Reiniciar el shuffle bag para este nivel
+      shuffleBagRef.current = [];
+      recentProductsRef.current = [];
+      refillShuffleBag(def);
 
       setMoney(0);
       setScore(0);
@@ -241,8 +302,42 @@ export default function GamePage() {
 
       requestGamePointerLock();
     },
-    [progress.upgrades, spawnCustomer]
+    [progress.upgrades, progress.seenUnlockPopups, spawnCustomer, refillShuffleBag, updateProgress]
   );
+
+  /** Llamado cuando el jugador cierra el popup de desbloqueo. Inicia el nivel efectivamente. */
+  const handleUnlockPopupClose = useCallback(() => {
+    setUnlockQueue([]);
+    const def = LEVELS.find(l => l.levelNumber === currentLevelNumber) || LEVELS[0];
+    const calculatedLives = 3 + (progress.upgrades.extraLives || 0);
+    const calculatedTime = def.timeLimitSeconds + (progress.upgrades.extraTime || 0) * 20;
+
+    shuffleBagRef.current = [];
+    recentProductsRef.current = [];
+    refillShuffleBag(def);
+
+    setMoney(0);
+    setScore(0);
+    setLives(calculatedLives);
+    setMaxLives(calculatedLives);
+    setTimeLeft(calculatedTime);
+    setOrdersDeliveredCount(0);
+    setTray({ type: 'empty' });
+    setOvenState({
+      isCooking: false,
+      recipeId: null,
+      progress: 0,
+      burnProgress: 0,
+      isReady: false,
+      isBurnt: false,
+    });
+    setCustomersRemaining(def.customerCount);
+
+    spawnCustomer(def);
+    setScreen('playing');
+    sounds.startBGM();
+    requestGamePointerLock();
+  }, [currentLevelNumber, progress.upgrades, spawnCustomer, refillShuffleBag]);
 
   // --------------------------------------------------------------------------
   // 8. GUÍA DINÁMICA DEL TUTORIAL (SOLO DÍA 1 - SIN EMOJIS)
@@ -369,7 +464,8 @@ export default function GamePage() {
     showHowToPlay ||
     showCredits ||
     showShop ||
-    decoratingRecipe !== null;
+    decoratingRecipe !== null ||
+    unlockQueue.length > 0;
 
   // Si estamos en menú, asegurar puntero liberado inmediatamente y resetear inputs
   useEffect(() => {
@@ -998,6 +1094,7 @@ export default function GamePage() {
       )}
       {showHowToPlay && (
         <HowToPlayModal
+          currentLevel={currentLevelNumber}
           onClose={() => {
             resetInput();
             setShowHowToPlay(false);
@@ -1048,6 +1145,14 @@ export default function GamePage() {
           isMuted={isMuted}
           onToggleMute={toggleMute}
           levelNumber={currentLevelNumber}
+        />
+      )}
+
+      {/* 7. POPUP DE DESBLOQUEO DE NUEVOS PRODUCTOS */}
+      {unlockQueue.length > 0 && (
+        <UnlockPopup
+          products={unlockQueue}
+          onClose={handleUnlockPopupClose}
         />
       )}
     </main>

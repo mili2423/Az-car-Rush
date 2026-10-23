@@ -199,6 +199,8 @@ export interface LevelDefinition {
   customerCount: number;
   timeLimitSeconds: number;
   availableProducts: ProductId[];
+  /** Productos que se desbloquean por primera vez este día. Pesan doble en los pedidos. */
+  newProductsThisDay?: ProductId[];
   customerTypes: CustomerType[];
   allowMultiOrders: boolean;
   burnSpeed?: number;           // Multiplicador de velocidad de quemado del horno (1 = normal, 2 = doble de rápido)
@@ -226,6 +228,8 @@ export interface GameProgress {
   upgrades: PlayerUpgrades;
   introSeen: boolean;
   tutorialSeen?: boolean;
+  /** IDs de productos cuyo popup de desbloqueo ya se mostró (para no repetirlo). */
+  seenUnlockPopups?: string[];
 }
 
 // Objetos interactuables en la cocina 3D
