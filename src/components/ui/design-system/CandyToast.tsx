@@ -18,13 +18,13 @@ export const CandyToast: React.FC<CandyToastProps> = ({
   const getIcon = () => {
     switch (type) {
       case 'success':
-        return <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />;
+        return <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />;
       case 'warning':
-        return <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />;
+        return <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />;
       case 'error':
-        return <Flame className="w-4 h-4 text-rose-600 shrink-0" />;
+        return <Flame className="w-5 h-5 text-rose-600 shrink-0" />;
       default:
-        return <Sparkles className="w-4 h-4 text-pink-600 shrink-0" />;
+        return <Sparkles className="w-5 h-5 text-pink-600 shrink-0" />;
     }
   };
 
@@ -36,9 +36,9 @@ export const CandyToast: React.FC<CandyToastProps> = ({
   };
 
   return (
-    <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 pointer-events-none max-w-md w-auto px-4 flex justify-center animate-scale-in">
+    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none max-w-lg w-auto px-4 flex justify-center animate-scale-in">
       <div
-        className={`flex items-center gap-2.5 px-5 py-2.5 rounded-full border-2 text-xs sm:text-sm font-black backdrop-blur-md ${typeClasses[type]}`}
+        className={`flex items-center gap-3 px-6 py-3 rounded-full border-2 text-sm sm:text-base font-black backdrop-blur-md ${typeClasses[type]}`}
       >
         {getIcon()}
         <span className="truncate">{message}</span>

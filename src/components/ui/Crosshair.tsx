@@ -174,7 +174,7 @@ export const Crosshair: React.FC<CrosshairProps> = ({
         }`}
       >
         <div
-          className={`h-2.5 w-2.5 rounded-full shadow-lg transition-colors ${
+          className={`h-3.5 w-3.5 rounded-full shadow-lg transition-colors ${
             isActionable
               ? 'bg-amber-300 ring-4 ring-pink-500/80 ring-offset-2 ring-offset-black/20 animate-pulse'
               : 'bg-white/85 ring-2 ring-black/40'
@@ -184,23 +184,23 @@ export const Crosshair: React.FC<CrosshairProps> = ({
         {/* Crosshair guide lines */}
         {!isActionable && (
           <>
-            <div className="absolute -left-3.5 h-0.5 w-2 bg-white/70 shadow-sm" />
-            <div className="absolute -right-3.5 h-0.5 w-2 bg-white/70 shadow-sm" />
-            <div className="absolute -top-3.5 h-2 w-0.5 bg-white/70 shadow-sm" />
-            <div className="absolute -bottom-3.5 h-2 w-0.5 bg-white/70 shadow-sm" />
+            <div className="absolute -left-4 h-0.5 w-2.5 bg-white/70 shadow-sm" />
+            <div className="absolute -right-4 h-0.5 w-2.5 bg-white/70 shadow-sm" />
+            <div className="absolute -top-4 h-2.5 w-0.5 bg-white/70 shadow-sm" />
+            <div className="absolute -bottom-4 h-2.5 w-0.5 bg-white/70 shadow-sm" />
           </>
         )}
 
         {/* Rich Action Prompt Badge */}
         {prompt && (
-          <div className="absolute top-8 flex flex-col items-center whitespace-nowrap animate-scale-in">
-            <div className="flex items-center gap-2 rounded-full bg-slate-900/90 px-3.5 py-1.5 text-xs font-black text-white shadow-2xl backdrop-blur-md border border-white/20">
+          <div className="absolute top-10 flex flex-col items-center whitespace-nowrap animate-scale-in">
+            <div className="flex items-center gap-2.5 rounded-full bg-slate-900/90 px-4 py-2 text-sm sm:text-base font-black text-white shadow-2xl backdrop-blur-md border border-white/20">
               {prompt.key === 'E' ? (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-rose-400 text-[11px] font-black text-white shadow-md">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-rose-400 text-xs font-black text-white shadow-md">
                   E
                 </span>
               ) : (
-                <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[9px] font-bold text-slate-300">
+                <span className="rounded bg-slate-700 px-2 py-0.5 text-xs font-bold text-slate-300">
                   {prompt.key}
                 </span>
               )}

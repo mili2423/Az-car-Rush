@@ -46,10 +46,10 @@ export const CandyModal: React.FC<CandyModalProps> = ({
   if (!isOpen) return null;
 
   const maxWidthClasses = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-xl',
-    xl: 'max-w-2xl',
+    sm: 'max-w-md',
+    md: 'max-w-xl',
+    lg: 'max-w-2xl',
+    xl: 'max-w-3xl',
   };
 
   return (
@@ -63,7 +63,7 @@ export const CandyModal: React.FC<CandyModalProps> = ({
       onMouseDown={e => e.stopPropagation()}
     >
       <div
-        className={`relative flex flex-col w-full ${maxWidthClasses[maxWidth]} my-auto max-h-[90vh] rounded-3xl border-4 border-pink-300 bg-[#fffbf7] shadow-2xl p-6 sm:p-7 text-[#451a03] animate-scale-in`}
+        className={`relative flex flex-col w-full ${maxWidthClasses[maxWidth]} my-auto max-h-[90vh] rounded-3xl border-4 border-pink-300 bg-[#fffbf7] shadow-2xl p-6 sm:p-8 text-[#451a03] animate-scale-in`}
         onClick={e => e.stopPropagation()}
         onPointerDown={e => e.stopPropagation()}
         onMouseDown={e => e.stopPropagation()}
@@ -71,11 +71,11 @@ export const CandyModal: React.FC<CandyModalProps> = ({
         {/* Top gloss strip */}
         <div className="absolute top-0 left-6 right-6 h-1.5 bg-gradient-to-r from-pink-400 via-purple-400 to-amber-300 rounded-b-full pointer-events-none" />
 
-        {/* Close Button */}
+        {/* Close Button (min 44px) */}
         {showCloseButton && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full text-stone-400 hover:text-pink-600 hover:bg-pink-100/80 transition-all active:scale-90"
+            className="absolute top-4 right-4 w-11 h-11 p-2.5 rounded-full text-stone-400 hover:text-pink-600 hover:bg-pink-100/80 transition-all active:scale-90 flex items-center justify-center shrink-0"
             title="Cerrar (Esc)"
           >
             <X className="w-5 h-5" />
@@ -85,7 +85,7 @@ export const CandyModal: React.FC<CandyModalProps> = ({
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-4 pr-6 pl-6">
           {icon && (
-            <div className="mb-2 p-3 rounded-2xl bg-pink-100/80 border-2 border-pink-200 text-pink-600 shadow-inner">
+            <div className="mb-2 p-3.5 rounded-2xl bg-pink-100/80 border-2 border-pink-200 text-pink-600 shadow-inner">
               {icon}
             </div>
           )}
@@ -93,7 +93,7 @@ export const CandyModal: React.FC<CandyModalProps> = ({
             {title}
           </h2>
           {subtitle && (
-            <p className="text-xs text-stone-500 font-semibold mt-1 max-w-sm leading-relaxed">
+            <p className="text-sm sm:text-base text-stone-600 font-semibold mt-1.5 max-w-md leading-relaxed">
               {subtitle}
             </p>
           )}

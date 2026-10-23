@@ -88,27 +88,30 @@ export const StartScreen: React.FC<StartScreenProps> = ({
       {/* ============================================================== */}
       {/* 2. HEADER                                                       */}
       {/* ============================================================== */}
+      {/* ============================================================== */}
+      {/* 2. HEADER                                                       */}
+      {/* ============================================================== */}
       <header className="relative w-full max-w-5xl flex items-center justify-between z-20 px-4 sm:px-8 pt-4 sm:pt-6 shrink-0">
         <div
-          className="flex items-center gap-2 bg-slate-950/85 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-2xl shadow-md transition-transform hover:scale-105 active:scale-95"
+          className="flex items-center gap-2 bg-slate-950/85 backdrop-blur-md border border-white/20 px-3.5 py-2 rounded-2xl shadow-md transition-transform hover:scale-105 active:scale-95"
           title="Instituto Técnico La Falda (ITLF)"
         >
           <img
             src="/img/logoNav.webp"
             alt="Instituto Técnico La Falda"
-            className="h-5 sm:h-7 w-auto object-contain"
+            className="h-7 sm:h-9 w-auto object-contain"
           />
         </div>
 
         <button
           onClick={onToggleMute}
-          className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl bg-white/90 border-2 border-amber-300 shadow-md transition-all hover:bg-amber-50 hover:scale-105 active:scale-95"
+          className="flex h-11 w-11 sm:h-12 sm:w-12 min-w-[44px] min-h-[44px] items-center justify-center rounded-2xl bg-white/90 border-2 border-amber-300 shadow-md transition-all hover:bg-amber-50 hover:scale-105 active:scale-95"
           title={isMuted ? 'Activar Sonido' : 'Silenciar'}
         >
           {isMuted ? (
-            <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-stone-400" />
+            <VolumeX className="w-5 h-5 sm:w-6 sm:h-6 text-stone-400" />
           ) : (
-            <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+            <Volume2 className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
           )}
         </button>
       </header>
@@ -121,15 +124,15 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         {/* Gorro de Chef */}
         <div className="relative mb-3 sm:mb-4 group cursor-default">
           <div
-            className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 rounded-[24px] sm:rounded-[30px] border-4 border-white shadow-2xl flex items-center justify-center transition-transform hover:rotate-6 hover:scale-105"
+            className="h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28 rounded-[28px] sm:rounded-[34px] border-4 border-white shadow-2xl flex items-center justify-center transition-transform hover:rotate-6 hover:scale-105"
             style={{
               background: 'linear-gradient(135deg, #ec4899 0%, #db2777 50%, #9333ea 100%)',
               boxShadow: '0 12px 28px rgba(219,39,119,0.35)',
             }}
           >
-            <ChefHat className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white drop-shadow-md" />
+            <ChefHat className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 text-white drop-shadow-md" />
           </div>
-          <div className="absolute -top-2 -right-2 text-xl sm:text-2xl animate-spin-slow">✨</div>
+          <div className="absolute -top-2 -right-2 text-2xl sm:text-3xl animate-spin-slow">✨</div>
         </div>
 
         {/* Título con tamaño fluido */}
@@ -137,7 +140,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           <h1
             className="font-black tracking-tight leading-none"
             style={{
-              fontSize: 'clamp(3rem, 14vw, 6rem)',
+              fontSize: 'clamp(3.5rem, 15vw, 6.5rem)',
               background: 'linear-gradient(180deg, #f43f5e 0%, #e11d48 45%, #be123c 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -149,7 +152,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           <h1
             className="font-black tracking-tight leading-none -mt-1"
             style={{
-              fontSize: 'clamp(3rem, 14vw, 6rem)',
+              fontSize: 'clamp(3.5rem, 15vw, 6.5rem)',
               background: 'linear-gradient(180deg, #fde047 0%, #f59e0b 50%, #ea580c 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -161,20 +164,20 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         </div>
 
         {/* Bajada */}
-        <p className="text-xs sm:text-sm font-bold text-amber-950/80 mb-4 sm:mb-5 max-w-xs leading-snug px-2">
+        <p className="text-sm sm:text-base font-bold text-amber-950/80 mb-4 sm:mb-5 max-w-sm leading-snug px-2">
           Hornea a toda velocidad, decora con estilo golosinero y deslumbra al pueblo entero.
         </p>
 
         {/* Badge de progreso */}
         {(progress.unlockedLevel > 1 || totalStars > 0) && (
-          <div className="flex items-center gap-3 sm:gap-4 bg-white/95 border-2 border-amber-300 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl shadow-lg mb-4 sm:mb-5 animate-scale-in">
-            <div className="flex items-center gap-1.5 text-xs font-black text-purple-900">
-              <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600" />
+          <div className="flex items-center gap-3 sm:gap-4 bg-white/95 border-2 border-amber-300 px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl shadow-lg mb-4 sm:mb-5 animate-scale-in">
+            <div className="flex items-center gap-1.5 text-sm font-black text-purple-900">
+              <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
               <span>Día {progress.unlockedLevel} / 5</span>
             </div>
             <div className="h-4 w-0.5 bg-amber-200" />
-            <div className="flex items-center gap-1.5 text-xs font-black text-amber-600">
-              <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-amber-400 text-amber-400" />
+            <div className="flex items-center gap-1.5 text-sm font-black text-amber-600">
+              <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-amber-400 text-amber-400" />
               <span>{totalStars} Estrellas</span>
             </div>
           </div>
@@ -183,12 +186,12 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         {/* ============================================================ */}
         {/* BOTONERA                                                      */}
         {/* ============================================================ */}
-        <div className="flex flex-col gap-2 sm:gap-2.5 w-full">
+        <div className="flex flex-col gap-2.5 sm:gap-3 w-full">
 
           {/* JUGAR */}
           <button
             onClick={onPlay}
-            className="relative group w-full py-3.5 sm:py-4 px-6 rounded-3xl font-black text-lg sm:text-xl text-white transition-all overflow-hidden"
+            className="relative group w-full py-4 sm:py-4.5 px-7 rounded-3xl font-black text-xl sm:text-2xl text-white transition-all overflow-hidden min-h-[56px]"
             style={{
               background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 40%, #d946ef 100%)',
               border: '3.5px solid #fef08a',
@@ -217,8 +220,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           >
             <div className="absolute inset-x-0 top-0 h-1/2 bg-white/25 rounded-t-2xl pointer-events-none" />
             <div className="relative flex items-center justify-center gap-3 drop-shadow-md">
-              <span className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/30 text-white shadow-inner group-hover:scale-110 transition-transform">
-                <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-white ml-0.5" />
+              <span className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-white/30 text-white shadow-inner group-hover:scale-110 transition-transform">
+                <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-white ml-0.5" />
               </span>
               <span className="tracking-wide">
                 {progress.unlockedLevel > 1 ? `Continuar Día ${progress.unlockedLevel}` : '¡JUGAR AHORA!'}
@@ -227,20 +230,20 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           </button>
 
           {/* Tutorial + Tienda */}
-          <div className="grid grid-cols-2 gap-2 mt-0.5">
+          <div className="grid grid-cols-2 gap-2.5 mt-0.5">
             <button
               onClick={onOpenTutorial}
-              className="flex items-center justify-center gap-1.5 py-3 px-3 rounded-2xl font-black text-xs bg-purple-50 hover:bg-purple-100/90 active:bg-purple-200 border-2 border-purple-300 text-purple-900 shadow-sm transition-all active:scale-95"
+              className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-black text-sm bg-purple-50 hover:bg-purple-100/90 active:bg-purple-200 border-2 border-purple-300 text-purple-900 shadow-sm transition-all active:scale-95 min-h-[48px]"
             >
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600 shrink-0" />
+              <Sparkles className="w-4.5 h-4.5 text-purple-600 shrink-0" />
               <span className="truncate">Tutorial</span>
             </button>
 
             <button
               onClick={onOpenShop}
-              className="flex items-center justify-center gap-1.5 py-3 px-3 rounded-2xl font-black text-xs bg-amber-50 hover:bg-amber-100/90 active:bg-amber-200 border-2 border-amber-300 text-amber-900 shadow-sm transition-all active:scale-95"
+              className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-black text-sm bg-amber-50 hover:bg-amber-100/90 active:bg-amber-200 border-2 border-amber-300 text-amber-900 shadow-sm transition-all active:scale-95 min-h-[48px]"
             >
-              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 shrink-0" />
+              <ShoppingBag className="w-4.5 h-4.5 text-amber-600 shrink-0" />
               <span className="truncate">Mejoras</span>
             </button>
           </div>
@@ -248,18 +251,18 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           {/* Cómo Jugar */}
           <button
             onClick={onOpenHowToPlay}
-            className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-black text-xs bg-sky-50 hover:bg-sky-100/90 active:bg-sky-200 border-2 border-sky-300 text-sky-900 shadow-sm transition-all active:scale-95"
+            className="flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl font-black text-sm bg-sky-50 hover:bg-sky-100/90 active:bg-sky-200 border-2 border-sky-300 text-sky-900 shadow-sm transition-all active:scale-95 min-h-[48px]"
           >
-            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-600 shrink-0" />
+            <BookOpen className="w-4.5 h-4.5 text-sky-600 shrink-0" />
             <span>Cómo Jugar &amp; Recetas</span>
           </button>
 
           {/* Créditos */}
           <button
             onClick={onOpenCredits}
-            className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-bold text-xs text-stone-500 hover:text-pink-600 hover:bg-pink-50/60 active:bg-pink-100 transition-colors"
+            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-sm text-stone-500 hover:text-pink-600 hover:bg-pink-50/60 active:bg-pink-100 transition-colors min-h-[44px]"
           >
-            <Info className="w-3.5 h-3.5" />
+            <Info className="w-4 h-4" />
             <span>Créditos del Proyecto</span>
           </button>
         </div>
@@ -268,12 +271,12 @@ export const StartScreen: React.FC<StartScreenProps> = ({
       {/* ============================================================== */}
       {/* 4. FOOTER                                                       */}
       {/* ============================================================== */}
-      <footer className="relative flex flex-col items-center gap-1 text-center pb-4 pt-2 z-20 px-4 shrink-0">
-        <div className="flex flex-wrap items-center justify-center gap-1 text-[10px] sm:text-[11px] font-bold text-slate-700 bg-white/80 backdrop-blur-md px-3 sm:px-4 py-1 rounded-full border border-pink-200 shadow-xs">
+      <footer className="relative flex flex-col items-center gap-1.5 text-center pb-4 pt-2 z-20 px-4 shrink-0">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 bg-white/80 backdrop-blur-md px-4 sm:px-5 py-1.5 rounded-full border border-pink-200 shadow-xs">
           <span>Proyecto realizado en</span>
           <span className="text-pink-700 font-black">Instituto Técnico La Falda (ITLF)</span>
         </div>
-        <div className="text-[9px] sm:text-[10px] font-semibold text-stone-400">
+        <div className="text-xs font-semibold text-stone-400">
           Azúcar Rush · Next.js · Three.js · React Three Fiber
         </div>
       </footer>

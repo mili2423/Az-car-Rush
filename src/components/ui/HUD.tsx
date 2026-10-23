@@ -93,19 +93,19 @@ export const HUD: React.FC<HUDProps> = ({
     switch (tray.type) {
       case 'empty':
         return (
-          <div className="flex items-center gap-2 italic text-xs text-stone-400">
+          <div className="flex items-center gap-2 italic text-sm text-stone-400">
             <span>Bandeja vacía</span>
-            <span className="text-[10px] text-stone-400">(Toma ingredientes con [E])</span>
+            <span className="text-xs text-stone-400 font-semibold">(Toma ingredientes con [E])</span>
           </div>
         );
       case 'ingredients':
         return (
           <div className="flex flex-col gap-1.5 w-full">
-            <div className="text-[10px] font-black uppercase tracking-wider flex items-center justify-between text-amber-900">
+            <div className="text-xs font-black uppercase tracking-wider flex items-center justify-between text-amber-900">
               <span>Ingredientes ({tray.items.length}/5):</span>
               <CandyBadge
                 variant={tray.items.length >= 3 ? 'success' : 'warning'}
-                size="sm"
+                size="md"
               >
                 {tray.items.length >= 3 ? 'Listo para batir' : 'Agrega más'}
               </CandyBadge>
@@ -114,13 +114,13 @@ export const HUD: React.FC<HUDProps> = ({
               {tray.items.map((ingId, idx) => (
                 <span
                   key={`${ingId}-${idx}`}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-white border border-pink-200 text-[#451a03] shadow-2xs"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black bg-white border border-pink-200 text-[#451a03] shadow-2xs"
                 >
                   {INGREDIENTS[ingId].name}
                 </span>
               ))}
             </div>
-            <div className="text-[10px] font-black text-emerald-700 mt-0.5">
+            <div className="text-xs font-black text-emerald-700 mt-0.5">
               → Llévalos a la Batidora Rosa y presiona [E]
             </div>
           </div>
@@ -129,16 +129,16 @@ export const HUD: React.FC<HUDProps> = ({
         const recipe = RECIPES[tray.recipeId];
         return (
           <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700 font-black text-xs border border-purple-200 shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center text-purple-700 font-black text-xs border border-purple-200 shadow-2xs shrink-0">
                 MASA
               </div>
               <div>
-                <div className="text-[9px] font-black text-purple-700 uppercase">Masa Lista:</div>
-                <div className="text-xs font-black text-[#451a03]">{recipe.name}</div>
+                <div className="text-xs font-black text-purple-700 uppercase">Masa Lista:</div>
+                <div className="text-sm font-black text-[#451a03]">{recipe.name}</div>
               </div>
             </div>
-            <CandyBadge variant="secondary" size="sm" className="animate-bounce">
+            <CandyBadge variant="secondary" size="md" className="animate-bounce">
               → Horno [E]
             </CandyBadge>
           </div>
@@ -148,21 +148,21 @@ export const HUD: React.FC<HUDProps> = ({
         const recipe = RECIPES[tray.recipeId];
         return (
           <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center text-orange-700 font-black text-xs border border-orange-200 shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center text-orange-700 font-black text-xs border border-orange-200 shadow-2xs shrink-0">
                 HORN
               </div>
               <div>
-                <div className="text-[9px] font-black text-orange-700 uppercase">Horneado:</div>
-                <div className="text-xs font-black text-[#451a03]">{recipe.name}</div>
+                <div className="text-xs font-black text-orange-700 uppercase">Horneado:</div>
+                <div className="text-sm font-black text-[#451a03]">{recipe.name}</div>
               </div>
             </div>
             {recipe.requiresDecoration ? (
-              <CandyBadge variant="primary" size="sm">
+              <CandyBadge variant="primary" size="md">
                 → Decoración [E]
               </CandyBadge>
             ) : (
-              <CandyBadge variant="success" size="sm">
+              <CandyBadge variant="success" size="md">
                 → Mostrador [E]
               </CandyBadge>
             )}
@@ -173,18 +173,18 @@ export const HUD: React.FC<HUDProps> = ({
         const recipe = RECIPES[tray.recipeId];
         return (
           <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-pink-100 flex items-center justify-center text-pink-700 font-black text-xs border border-pink-200 shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-pink-100 flex items-center justify-center text-pink-700 font-black text-xs border border-pink-200 shadow-2xs shrink-0">
                 LISTO
               </div>
               <div>
-                <div className="text-[9px] font-black text-pink-700 uppercase">
+                <div className="text-xs font-black text-pink-700 uppercase">
                   {tray.isIncorrectDecor ? 'Decoración Errónea:' : 'Listo para servir:'}
                 </div>
-                <div className="text-xs font-black text-[#451a03]">{recipe.name}</div>
+                <div className="text-sm font-black text-[#451a03]">{recipe.name}</div>
               </div>
             </div>
-            <CandyBadge variant={tray.isIncorrectDecor ? 'warning' : 'success'} size="sm" className="animate-pulse">
+            <CandyBadge variant={tray.isIncorrectDecor ? 'warning' : 'success'} size="md" className="animate-pulse">
               → Mostrador [E]
             </CandyBadge>
           </div>

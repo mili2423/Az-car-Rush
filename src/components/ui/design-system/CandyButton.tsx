@@ -46,12 +46,12 @@ export const CandyButton: React.FC<CandyButtonProps> = ({
       'bg-transparent hover:bg-pink-100/60 text-stone-600 hover:text-pink-700 border-2 border-transparent shadow-none active:scale-95',
   };
 
-  // Size classes
+  // Size classes (alrededor de 44px de alto mínimo ergonómico)
   const sizeClasses: Record<ButtonSize, string> = {
-    sm: 'text-xs py-1.5 px-3.5 gap-1.5 min-h-[34px]',
-    md: 'text-sm py-2.5 px-5 gap-2 min-h-[42px]',
-    lg: 'text-base sm:text-lg py-3.5 px-7 gap-2.5 min-h-[50px]',
-    icon: 'p-2.5 w-10 h-10 aspect-square',
+    sm: 'text-xs py-2 px-4 gap-2 min-h-[44px]',
+    md: 'text-sm py-2.5 px-5 gap-2.5 min-h-[48px]',
+    lg: 'text-base sm:text-lg py-3.5 px-7 gap-3 min-h-[56px]',
+    icon: 'p-2.5 w-11 h-11 min-w-[44px] min-h-[44px] aspect-square',
   };
 
   const widthClass = fullWidth ? 'w-full' : '';

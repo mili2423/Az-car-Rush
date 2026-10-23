@@ -7,6 +7,17 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontSize: {
+        '2xs': ['0.8125rem', { lineHeight: '1.15rem' }], // ~14.3px en 1366, 16.2px en 1920 (mínimo >= 14px)
+        xs: ['0.875rem', { lineHeight: '1.25rem' }],     // ~15.4px en 1366, 17.5px en 1920
+        sm: ['1rem', { lineHeight: '1.45rem' }],         // ~17.6px en 1366, 20px en 1920
+        base: ['1.125rem', { lineHeight: '1.65rem' }],   // ~19.8px en 1366, 22.5px en 1920
+        lg: ['1.25rem', { lineHeight: '1.75rem' }],      // ~22px en 1366, 25px en 1920
+        xl: ['1.45rem', { lineHeight: '1.9rem' }],       // ~25.5px en 1366, 29px en 1920
+        '2xl': ['1.8rem', { lineHeight: '2.2rem' }],
+        '3xl': ['2.25rem', { lineHeight: '2.6rem' }],
+        '4xl': ['2.8rem', { lineHeight: '3.1rem' }],
+      },
       colors: {
         // Design System Palette
         primary: {

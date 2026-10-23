@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Escala centralizada base relativa:
+   - 1366x768: ~18px (+12.5% ergonómico sin cortar la pantalla)
+   - 1920x1080: ~20px (+25% respecto a los 16px por defecto)
+   - Móviles: 16px mínimo
+*/
+html {
+  font-size: clamp(16px, 0.45vw + 11.5px, 20px);
+}
+
 :root {
   --color-primary: #ec4899;
   --color-secondary: #a78bfa;
@@ -11,9 +20,10 @@
   --color-text: #451a03;
   --color-success: #22c55e;
   --color-error: #ef4444;
-  --radius-card: 24px;
+  --radius-card: 26px;
   --radius-button: 9999px;
   --radius-chip: 9999px;
+  --touch-target-min: 44px;
 }
 
 @layer utilities {
